@@ -3,10 +3,10 @@ __pycache__/
 .venv/
 venv/
 .env
-data/*.csv
-data/*.parquet
-!data/.gitkeep
-results/
-.ipynb_checkpoints/
 .pytest_cache/
-data/real/
+.ipynb_checkpoints/
+results/
+
+# Los datos de mercado se reconstruyen con scripts/fetch_*.py: no van a git.
+data/**
+!data/.gitkeep

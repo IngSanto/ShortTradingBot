@@ -26,6 +26,8 @@ import pandas as pd
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from shortbot.markets import MERCADOS, get_market  # noqa: E402
+from shortbot.yahoo import YahooError  # noqa: E402
+from shortbot.yahoo import download as yahoo_download  # noqa: E402
 
 DATA_ROOT = os.path.join(os.path.dirname(__file__), "..", "data")
 
@@ -43,30 +45,34 @@ def _save(df: pd.DataFrame, market_key: str, symbol: str) -> str:
 # Acciones y futuros (Yahoo Finance)
 # --------------------------------------------------------------------------- #
 
-def fetch_yfinance(symbols, start: str, end: str | None, market_key: str) -> list[str]:
-    try:
-        import yfinance as yf
-    except ImportError:
-        raise SystemExit("Falta yfinance. Instala: pip install yfinance")
+def fetch_yahoo(symbols, start: str, end: str | None, market_key: str) -> list[str]:
+    """Descarga vía el cliente propio (src/shortbot/yahoo.py), no vía yfinance.
 
+    yfinance necesita cookie y 'crumb' de ``fc.yahoo.com``/``guce.yahoo.com``,
+    que suelen estar bloqueados tras un proxy, y usa impersonación TLS que el
+    túnel corta. El endpoint v8 de gráficos no necesita nada de eso.
+    """
     saved = []
-    for symbol in symbols:
+    for i, symbol in enumerate(symbols):
         try:
-            raw = yf.download(symbol, start=start, end=end, interval="1d",
-                              auto_adjust=False, progress=False)
+            df = yahoo_download(symbol, start=start, end=end)
+        except YahooError as exc:
+            print(f"  [x] {symbol}: {exc}")
+            continue
         except Exception as exc:
             print(f"  [x] {symbol}: {type(exc).__name__}: {exc}")
             continue
-        if raw is None or raw.empty:
-            print(f"  [x] {symbol}: sin datos (simbolo erroneo o red bloqueada)")
+        if df.empty:
+            print(f"  [x] {symbol}: sin datos (¿símbolo erróneo?)")
             continue
-        if isinstance(raw.columns, pd.MultiIndex):
-            raw.columns = raw.columns.get_level_values(0)
-        raw.columns = [str(c).lower() for c in raw.columns]
-        df = raw[["open", "high", "low", "close", "volume"]].dropna()
         path = _save(df, market_key, symbol)
-        print(f"  [v] {symbol}: {len(df)} barras -> {path}")
+        print(f"  [v] {symbol}: {len(df):,} barras "
+              f"({df.index[0].date()} -> {df.index[-1].date()}) -> {path}")
         saved.append(path)
+        # Yahoo limita por tasa con agresividad: un respiro entre símbolos sale
+        # mucho más barato que encadenar reintentos con espera exponencial.
+        if i + 1 < len(symbols):
+            time.sleep(1.0)
     return saved
 
 
@@ -170,7 +176,7 @@ def main() -> int:
     if args.market == "cripto":
         saved = fetch_ccxt(symbols, args.start, args.exchange, args.timeframe)
     else:
-        saved = fetch_yfinance(symbols, args.start, args.end, args.market)
+        saved = fetch_yahoo(symbols, args.start, args.end, args.market)
 
     print(f"\n{len(saved)}/{len(symbols)} simbolos guardados en data/{args.market}/")
     if not saved:

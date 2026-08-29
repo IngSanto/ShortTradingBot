@@ -103,8 +103,14 @@ def rolling_return(series: pd.Series, period: int) -> pd.Series:
 
 
 def realized_vol(series: pd.Series, period: int = 20, periods_per_year: int = 252) -> pd.Series:
-    """Volatilidad realizada anualizada sobre retornos logaritmicos."""
-    rets = np.log(series).diff()
+    """Volatilidad realizada anualizada sobre retornos logaritmicos.
+
+    Los precios no positivos existen de verdad: el WTI cerro a -37,63 el 20 de
+    abril de 2020. El logaritmo no esta definido ahi, asi que esas barras se
+    marcan como NaN en vez de propagar un aviso y un valor sin sentido.
+    """
+    positivo = series.where(series > 0)
+    rets = np.log(positivo).diff()
     return rets.rolling(period, min_periods=period).std(ddof=0) * np.sqrt(periods_per_year)
 
 

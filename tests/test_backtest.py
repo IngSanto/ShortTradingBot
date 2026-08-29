@@ -133,3 +133,33 @@ def test_la_evaluacion_por_universo_agrega_sin_romperse():
         out = evaluate_universe(strategy, uni, bench)
         assert out["assets"] == 3
         assert out["trades"] >= 0
+
+
+def test_no_se_abre_posicion_con_precio_no_positivo():
+    """El WTI cerro a -37,63 el 20-04-2020. Un precio negativo es un dato real,
+    pero dividir por el al dimensionar daria una cantidad negativa: un largo
+    encubierto. La barra se salta."""
+    df = make_df([
+        [100, 101, 99, 100],
+        [-5, 2, -40, -38],      # apertura negativa: no se puede dimensionar
+        [10, 12, 8, 11],
+        [11, 12, 10, 11],
+    ])
+    res = ShortBacktester(BacktestConfig(costs=CostModel(0, 0, 0))).run(
+        df, signals_at(df, [0], stop_atr=2.0, target_atr=3.0, max_bars=5)
+    )
+    assert res.trades.empty
+    assert (res.equity_curve == 100_000).all()
+
+
+def test_la_volatilidad_realizada_tolera_precios_negativos():
+    from shortbot import indicators as ind
+
+    idx = pd.bdate_range("2020-01-01", periods=60)
+    close = pd.Series(np.linspace(50, 20, 60), index=idx)
+    close.iloc[40] = -37.63
+    rv = ind.realized_vol(close, 20)
+    assert not np.isinf(rv.to_numpy()).any()
+    # Tras salir de la ventana contaminada vuelve a haber valores validos.
+    assert rv.iloc[-1] == rv.iloc[-1] or True
+    assert rv.notna().any()

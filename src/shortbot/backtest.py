@@ -191,8 +191,14 @@ class ShortBacktester:
         risk_per_unit = pending["stop_atr"] * pending["atr"]
         if not np.isfinite(risk_per_unit) or risk_per_unit <= 0:
             return None
+        # Un precio no positivo no es un error de datos (el WTI cerro a -37,63
+        # el 20-04-2020), pero el dimensionamiento por nocional pierde sentido:
+        # dividir por un precio negativo daria una cantidad negativa, es decir,
+        # un largo encubierto. Preferimos no operar esa barra.
+        if not np.isfinite(open_px) or open_px <= 0:
+            return None
         qty = (equity * cfg.risk_per_trade) / risk_per_unit
-        qty = min(qty, (equity * cfg.max_notional_pct) / max(open_px, 1e-9))
+        qty = min(qty, (equity * cfg.max_notional_pct) / open_px)
         if qty <= 0:
             return None
         return _Position(
