@@ -13,14 +13,18 @@ filtros, no por una corazonada.
 | Documento | Contenido |
 |---|---|
 | [`docs/01-estrategias-candidatas.md`](docs/01-estrategias-candidatas.md) | **Empieza aquí.** Catálogo de 17 estrategias en corto: tesis, reglas exactas, cómo falla cada una y en qué orden probarlas. Incluye cuánto pesa elegir mercado. |
-| [`docs/02-metodologia-validacion.md`](docs/02-metodologia-validacion.md) | Las cuatro puertas de validación, el escalado a real y la gestión de riesgo específica del corto. |
+| [`docs/02-metodologia-validacion.md`](docs/02-metodologia-validacion.md) | Las puertas de validación, el escalado a real y la gestión de riesgo específica del corto. |
+| [`docs/03-resultados-datos-reales.md`](docs/03-resultados-datos-reales.md) | **Resultados sobre datos reales.** Qué se ha descartado ya y por qué. Se actualiza con cada tanda. |
 
 ## Puesta en marcha
 
 ```bash
 pip install -r requirements.txt
 
-# 1. Descargar datos reales (requiere internet)
+# 1a. Datos reales desde GitHub (funciona con red restringida)
+python scripts/fetch_github_data.py --source all
+
+# 1b. Datos reales desde proveedores (requiere acceso a Yahoo/Binance)
 python scripts/fetch_data.py --market cripto   --start 2019-01-01
 python scripts/fetch_data.py --market acciones --start 2010-01-01
 python scripts/fetch_data.py --market futuros  --start 2010-01-01
@@ -53,7 +57,8 @@ src/shortbot/
   evaluation.py     Agregación por universo, robustez, regímenes, walk-forward
   strategies/       12 estrategias implementadas, agrupadas por familia
 scripts/
-  fetch_data.py          Descarga histórica de los tres mercados
+  fetch_data.py          Descarga histórica de los tres mercados (Yahoo/ccxt)
+  fetch_github_data.py   Descarga desde repos públicos de GitHub (red restringida)
   screen_strategies.py   Criba comparativa del catálogo completo
   compare_markets.py     Aísla el efecto del mercado sobre la misma estrategia
 tests/              Pruebas de que el motor no se engaña a sí mismo
@@ -90,8 +95,10 @@ cripto o futuros; en acciones el préstamo se come el resultado.
 - [x] Perfiles de mercado y cuantificación del efecto del carry
 - [x] Criba, robustez paramétrica y desglose por régimen
 - [x] Scripts de descarga para los tres mercados
-- [x] Primera ejecución sobre precios reales (VIX diario, 9.261 sesiones desde 1990)
-- [ ] **Universo real de los tres mercados** — bloqueado: la política de red de este entorno deniega Yahoo, Binance, Bybit, Kraken, Stooq y el resto de proveedores. Solo GitHub es accesible. Requiere una máquina con salida a internet.
+- [x] Datos reales vía GitHub: BTC/USD 2012-2025 (diario, 4h y 1h) y VIX 1990-2026
+- [x] Primera criba sobre datos reales: **3 estrategias descartadas, 0 promovidas**
+- [ ] **Universo real de los tres mercados** — bloqueado: la política de red de este entorno deniega Yahoo, Binance, Bybit, Kraken, Stooq, CoinGecko, Polygon y Alpha Vantage. Solo `raw.githubusercontent.com` es accesible. Requiere una máquina con salida a internet.
+- [ ] Histórico de funding y open interest — sin ellos, las dos estrategias con mejor tesis siguen sin evaluar
 - [ ] Validación walk-forward sobre histórico real
 - [ ] Paper trading
 - [ ] Operativa real con escalado gradual

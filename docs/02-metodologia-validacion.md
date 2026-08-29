@@ -30,7 +30,7 @@ Aquí es donde mueren las estrategias que parecían buenas.
 |---|---|---|
 | **Meseta de parámetros** | >60% de las combinaciones con expectativa positiva | Sobreajuste. Si solo gana con RSI>90 y pierde con RSI>88, no hay edge: hay una casualidad. |
 | **Consistencia entre activos** | `assets_positive` > 0,5 | Una acción afortunada disfrazada de sistema. |
-| **t-estadístico** | \|t\| > 2 | Si no, el resultado no se distingue del ruido por bonita que sea la curva. |
+| **t-estadístico** | \|t\| > 2 | Si no, el resultado no se distingue del ruido por bonita que sea la curva. **La meseta no sustituye a esto**: mide que no dependes de un parámetro afortunado, no que el resultado sea real. |
 | **Desglose por régimen** | Saber en cuál gana | Un sistema que solo gana en régimen bajista es un **seguro**, no alfa. Es válido, pero hay que dimensionarlo como seguro. |
 | **Sensibilidad a costes** | Sigue positiva al doblar slippage y préstamo | Un edge que muere al doblar el slippage no sobrevive al mercado real. |
 
@@ -38,6 +38,29 @@ Aquí es donde mueren las estrategias que parecían buenas.
 **centro de la meseta**. El máximo de una rejilla es casi siempre ruido.
 
 ---
+
+## Puerta 2.5 — Temporalidad cruzada (coste: minutos)
+
+**Añadida tras matar a `squeeze_breakdown`**, que había superado la puerta 2 con
+una meseta de parámetros perfecta (27/27 combinaciones positivas) y signo
+positivo en todos los sub-periodos.
+
+Si una estrategia captura una regularidad real del mercado, debe dejar rastro
+—más débil, pero del mismo signo— al cambiar la temporalidad. Un edge que solo
+existe en barras diarias y desaparece en 4h casi siempre es una muestra pequeña
+disfrazada de sistema.
+
+**Cómo se aplica:** se reconstruyen las barras desde el dato de origen (1 min o
+tick) en al menos dos temporalidades y se compara la expectativa. Los parámetros
+se dejan **iguales**: reoptimizarlos para la nueva temporalidad convertiría la
+prueba en otro ejercicio de ajuste.
+
+**Se descarta si** el signo se invierte o la expectativa cae a cero en la
+temporalidad con más muestra.
+
+**Por qué es tan barata y tan letal:** multiplica la muestra por 5-10 sin
+conseguir un solo dato nuevo. `squeeze_breakdown` pasó de +0,393 R (55
+operaciones) a −0,012 R (239 operaciones) sin más que cambiar de diario a 4h.
 
 ## Puerta 3 — Walk-forward y datos no vistos (coste: días)
 

@@ -234,6 +234,12 @@ número de barras; lo único que hace el precio es añadir ruido alrededor.
 
 ## 5. Orden de trabajo recomendado
 
+> **Actualización (agosto 2026):** el orden de esta tabla ya no refleja la
+> evidencia. La primera tanda de datos reales degradó `failed_breakout_short`
+> (nº2 aquí) y descartó `bollinger_upper_fade` y `parabolic_extension_fade`.
+> Ver [`docs/03-resultados-datos-reales.md`](03-resultados-datos-reales.md).
+> Las prioridades de abajo siguen siendo válidas como *tesis*, no como resultado.
+
 | # | Estrategia | Mercado prioritario | Por qué | Estado |
 |---|---|---|---|---|
 | 1 | **`funding_fade_short`** (E1) | Cripto | Única con carry a favor y flujo observable directamente | Implementada; falta descargar funding |
