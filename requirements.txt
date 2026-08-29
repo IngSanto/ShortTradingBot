@@ -1,0 +1,6 @@
+pandas>=2.0
+numpy>=1.24
+# Opcionales (datos reales). Instalar cuando se conecte un proveedor:
+# yfinance>=0.2.40
+# ccxt>=4.2
+# matplotlib>=3.8
