@@ -56,11 +56,41 @@ preguntas distintas. Confundirlas invalida la prueba:
 | Variante | Qué hace | Qué mide |
 |---|---|---|
 | **A — parámetros iguales** | Una EMA(20) sobre barras de 4h mide una tendencia de 3,3 días, no de 20 | Es **otra hipótesis**: si el patrón existe también a escalas más cortas. Invariancia de escala. |
-| **B — ventanas escaladas** | EMA(20) diaria → EMA(120) en 4h (×6) | La **misma** ventana económica con 6 veces más observaciones. Es la prueba que multiplica la muestra de la hipótesis original. |
+| **B — ventanas escaladas** | EMA(20) diaria → EMA(120) en 4h (×6) | La **misma** ventana económica medida con más finura. Comprueba que el resultado no depende de dónde caía el corte de la barra diaria. |
 
-Se escalan solo los parámetros que son **ventanas temporales** (periodos de
-medias, canales, lookbacks, barras máximas). Los umbrales y los múltiplos de ATR
-**no se tocan**: no son ventanas, son niveles.
+Se escalan los parámetros que son **ventanas temporales** (periodos de medias,
+canales, lookbacks, barras máximas). Los umbrales y porcentajes **no se tocan**:
+no son ventanas.
+
+**Los múltiplos de ATR necesitan una corrección aparte, y es fácil olvidarla.**
+Escalar el *periodo* del ATR conserva la ventana pero no la magnitud: el ATR de
+una barra de 4h vale **0,396 veces** el de una diaria (medido sobre 10
+perpetuos, idéntico en los diez; la teoría del paseo aleatorio predice
+1/√6 = 0,41). Sin corregir, un stop de "2 ATR" pasa a ser 2,5 veces más ajustado
+en términos absolutos y deja de ser la misma operación. **El síntoma es la tasa
+de acierto**: en la primera versión de esta prueba cayó del 49% al 37%, y al
+corregir los múltiplos por 1/0,396 volvió al 50,5%.
+
+### La variante B NO multiplica la muestra
+
+Es el error que cometimos al diseñar esta puerta, y conviene tenerlo claro
+porque cambia lo que la prueba puede demostrar.
+
+Si la estrategia mantiene **una posición a la vez** durante una ventana
+económica fija, el número de operaciones lo determina el horizonte, no el número
+de barras. Bajar de diario a 4h con las ventanas escaladas dio 404 operaciones
+frente a 341: un 18% más, no un 600%. Las barras extra dan **precisión de
+entrada**, no observaciones independientes.
+
+**Consecuencia:** la variante B no resuelve un problema de muestra corta.
+Para eso solo hay tres vías reales:
+
+1. **Más activos** — la más barata y la que da observaciones más independientes.
+2. **Más historia** — limitada por lo que exista.
+3. **La variante A** — que sí multiplica las operaciones, pero está probando otra hipótesis.
+
+La variante B sigue valiendo para lo que sí hace: descartar que el resultado
+dependa de dónde caía el corte de la barra diaria.
 
 **Escalar una ventana no es reoptimizar.** El valor no se elige por su
 resultado, se traduce para preservar el mismo horizonte. Reoptimizar sería

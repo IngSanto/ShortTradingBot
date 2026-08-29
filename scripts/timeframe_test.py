@@ -39,9 +39,7 @@ from shortbot.strategies import STRATEGY_REGISTRY, build  # noqa: E402
 # Barras por dia de cada temporalidad en un mercado 24/7.
 BARRAS_POR_DIA = {"1d": 1, "4h": 6, "1h": 24, "15m": 96}
 
-# Parametros que son ventanas temporales y deben escalarse con la temporalidad.
-# Los que no aparecen aqui (umbrales, multiplos de ATR) NO se tocan: no son
-# ventanas, son niveles.
+# Parametros que son VENTANAS TEMPORALES: se escalan con el numero de barras.
 VENTANAS = {
     "pullback_ema", "fast_ema", "slow_ema", "atr_period", "channel",
     "lookback", "trigger_lookback", "bb_period", "adx_period", "vol_period",
@@ -49,12 +47,45 @@ VENTANAS = {
     "run_bars", "max_bars", "ema_period", "rsi_period",
 }
 
+# Parametros que son MULTIPLOS DE ATR: hay que corregirlos aparte.
+#
+# Escalar el periodo del ATR conserva la ventana pero NO la magnitud: el ATR de
+# una barra de 4h es ~0,40 veces el de una diaria (medido sobre los 10
+# perpetuos; la teoria del paseo aleatorio predice 1/raiz(6)=0,41). Sin corregir,
+# un stop de "2 ATR" pasa a ser 2,5 veces mas ajustado en terminos absolutos y
+# la operacion deja de ser la misma: se ve en la tasa de acierto, que se
+# desploma del 49% al 37%.
+MULTIPLOS_ATR = {"stop_atr", "target_atr", "ext_atr"}
 
-def escalar(params: dict, factor: int, tope: int = 1000) -> dict:
+# Umbrales y porcentajes NO se tocan en ningun caso: no son ventanas ni escalas.
+
+
+def ratio_atr_empirico(uni_alt: dict, uni_dia: dict, factor: int) -> float:
+    """Cuanto vale el ATR de esta temporalidad respecto al diario, medido."""
+    import numpy as np
+
+    from shortbot import indicators as ind
+
+    ratios = []
+    for sym, alt in uni_alt.items():
+        dia = uni_dia.get(sym)
+        if dia is None:
+            continue
+        a_alt = (ind.atr(alt, 14 * factor) / alt["close"]).resample("D").last().dropna()
+        a_dia = (ind.atr(dia, 14) / dia["close"]).dropna()
+        comun = a_alt.index.intersection(a_dia.index)
+        if len(comun) > 100:
+            ratios.append(float((a_alt.reindex(comun) / a_dia.reindex(comun)).median()))
+    return float(np.median(ratios)) if ratios else 1.0 / (factor ** 0.5)
+
+
+def escalar(params: dict, factor: int, ratio_atr: float, tope: int = 2000) -> dict:
     out = {}
     for k, v in params.items():
         if k in VENTANAS and isinstance(v, (int, float)) and v > 0:
             out[k] = min(int(round(v * factor)), tope)
+        elif k in MULTIPLOS_ATR and isinstance(v, (int, float)) and v > 0:
+            out[k] = round(v / ratio_atr, 3)
     return out
 
 
@@ -99,8 +130,14 @@ def main() -> int:
 
         variantes = [("A: parametros iguales", build(args.strategy))]
         if factor > 1:
+            uni_dia = cargar(args.pattern.format(tf="1d"))
+            ratio = ratio_atr_empirico(uni, uni_dia, factor)
+            ajustados = escalar(base.params, factor, ratio)
+            print(f"  [{tf}] ATR medido = {ratio:.3f} x el diario "
+                  f"-> multiplos de ATR corregidos x{1/ratio:.2f}")
+            print(f"       parametros B: {ajustados}")
             variantes.append((f"B: ventanas x{factor}",
-                              build(args.strategy, **escalar(base.params, factor))))
+                              build(args.strategy, **ajustados)))
 
         for etiqueta, est in variantes:
             r = evaluate_universe(est, uni, None, cfg)
