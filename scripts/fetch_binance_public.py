@@ -107,7 +107,11 @@ def descargar_funding(symbol: str, meses: list[str]) -> pd.Series:
     out["date"] = pd.to_datetime(ts, unit=unidad, utc=True).dt.tz_localize(None)
     # El funding se liquida cada 8h: se suma para obtener la tasa diaria, que es
     # la unidad en la que razonan la estrategia y el modelo de costes.
-    return out.set_index("date")[col_tasa].astype(float).resample("D").sum()
+    # min_count=1 es imprescindible: sin el, resample().sum() devuelve 0 para
+    # los dias SIN registros, y un hueco de datos se convierte en un "funding
+    # cero" perfectamente creible que la estrategia leeria como dato real.
+    # BNBUSDT tenia asi 743 dias falsos a cero de 2.364.
+    return out.set_index("date")[col_tasa].astype(float).resample("D").sum(min_count=1)
 
 
 def main() -> int:
@@ -145,8 +149,14 @@ def main() -> int:
             funding = pd.Series(dtype=float)
 
         if not funding.empty:
-            bars["funding_rate"] = funding.reindex(bars.index, method="ffill")
-            media = bars["funding_rate"].mean()
+            # ffill con limite: arrastrar el ultimo funding conocido un par de
+            # dias es razonable, pero rellenar un hueco de meses inventaria un
+            # dato. Lo que quede en NaN desactiva la estrategia esas barras.
+            bars["funding_rate"] = funding.reindex(bars.index).ffill(limit=2)
+            cobertura = bars["funding_rate"].notna().mean()
+            if cobertura < 0.95:
+                print(f"  [!] funding solo cubre el {cobertura:.0%} de las barras")
+            media = bars["funding_rate"].mean(skipna=True)
             print(f"  funding: media diaria {media:.5f} ({media * 365:+.1%} anualizado)")
             if media > 0:
                 print("           positivo -> los largos pagan: el corto COBRA carry")
