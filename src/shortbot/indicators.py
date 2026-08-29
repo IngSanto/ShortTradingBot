@@ -115,4 +115,18 @@ def relative_strength(series: pd.Series, benchmark: pd.Series, period: int = 63)
 
 
 def volume_ratio(volume: pd.Series, period: int = 20) -> pd.Series:
-    return volume / volume.rolling(period, min_periods=period).mean()
+    mean = volume.rolling(period, min_periods=period).mean()
+    return volume / mean.replace(0.0, np.nan)
+
+
+def volume_filter(volume: pd.Series, min_ratio: float, period: int = 20) -> pd.Series:
+    """Filtro de volumen que se DESACTIVA si el dato no existe.
+
+    Sin esta distincion, una serie sin volumen (indices, muchos CSV publicos)
+    hace que la estrategia devuelva cero senales en silencio: parece que no hay
+    oportunidades cuando en realidad falta el dato. Es un modo de fallo mucho
+    peor que un error, porque no se nota.
+    """
+    if volume is None or volume.isna().all() or (volume.fillna(0) == 0).all():
+        return pd.Series(True, index=volume.index)
+    return (volume_ratio(volume, period) >= min_ratio).fillna(True)

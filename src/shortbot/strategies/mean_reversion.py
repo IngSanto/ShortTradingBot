@@ -92,7 +92,7 @@ class GapUpFade(Strategy):
         gap = (df["open"] - df["close"].shift(1)) / a
         rng = (df["high"] - df["low"]).replace(0.0, np.nan)
         close_pos = (df["close"] - df["low"]) / rng
-        vol_ok = ind.volume_ratio(df["volume"], 20).fillna(1.0) >= p["min_volume_ratio"]
+        vol_ok = ind.volume_filter(df["volume"], p["min_volume_ratio"])
 
         entry = (gap >= p["gap_atr"]) & (close_pos <= p["close_position_max"]) & vol_ok
         return frame(

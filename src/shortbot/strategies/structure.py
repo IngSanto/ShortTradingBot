@@ -47,7 +47,7 @@ class FailedBreakoutShort(Strategy):
         p = self.params
         a = ind.atr(df, p["atr_period"])
         _, prior_high = ind.donchian(df, p["lookback"])
-        vol_ok = ind.volume_ratio(df["volume"], 20).fillna(1.0) >= p["min_volume_ratio"]
+        vol_ok = ind.volume_filter(df["volume"], p["min_volume_ratio"])
 
         swept = df["high"] > prior_high      # se barre el maximo previo
         reclaimed = df["close"] < prior_high  # pero se cierra por debajo

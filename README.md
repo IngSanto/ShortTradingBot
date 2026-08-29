@@ -90,7 +90,8 @@ cripto o futuros; en acciones el préstamo se come el resultado.
 - [x] Perfiles de mercado y cuantificación del efecto del carry
 - [x] Criba, robustez paramétrica y desglose por régimen
 - [x] Scripts de descarga para los tres mercados
-- [ ] **Ejecutar la descarga** — bloqueado en este entorno: la política de red deniega Yahoo, Binance, Bybit, Kraken y Stooq. Requiere una máquina con salida a internet.
+- [x] Primera ejecución sobre precios reales (VIX diario, 9.261 sesiones desde 1990)
+- [ ] **Universo real de los tres mercados** — bloqueado: la política de red de este entorno deniega Yahoo, Binance, Bybit, Kraken, Stooq y el resto de proveedores. Solo GitHub es accesible. Requiere una máquina con salida a internet.
 - [ ] Validación walk-forward sobre histórico real
 - [ ] Paper trading
 - [ ] Operativa real con escalado gradual
