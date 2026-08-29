@@ -50,13 +50,31 @@ Si una estrategia captura una regularidad real del mercado, debe dejar rastro
 existe en barras diarias y desaparece en 4h casi siempre es una muestra pequeña
 disfrazada de sistema.
 
-**Cómo se aplica:** se reconstruyen las barras desde el dato de origen (1 min o
-tick) en al menos dos temporalidades y se compara la expectativa. Los parámetros
-se dejan **iguales**: reoptimizarlos para la nueva temporalidad convertiría la
-prueba en otro ejercicio de ajuste.
+**Cómo se aplica.** Hay dos formas de bajar de temporalidad y responden a
+preguntas distintas. Confundirlas invalida la prueba:
 
-**Se descarta si** el signo se invierte o la expectativa cae a cero en la
-temporalidad con más muestra.
+| Variante | Qué hace | Qué mide |
+|---|---|---|
+| **A — parámetros iguales** | Una EMA(20) sobre barras de 4h mide una tendencia de 3,3 días, no de 20 | Es **otra hipótesis**: si el patrón existe también a escalas más cortas. Invariancia de escala. |
+| **B — ventanas escaladas** | EMA(20) diaria → EMA(120) en 4h (×6) | La **misma** ventana económica con 6 veces más observaciones. Es la prueba que multiplica la muestra de la hipótesis original. |
+
+Se escalan solo los parámetros que son **ventanas temporales** (periodos de
+medias, canales, lookbacks, barras máximas). Los umbrales y los múltiplos de ATR
+**no se tocan**: no son ventanas, son niveles.
+
+**Escalar una ventana no es reoptimizar.** El valor no se elige por su
+resultado, se traduce para preservar el mismo horizonte. Reoptimizar sería
+probar EMA(80), EMA(120) y EMA(160) en 4h y quedarse con la mejor: eso sí
+invalidaría la prueba.
+
+**Criterio:** debe superar **B**. Superar también **A** es mejor señal todavía,
+pero no es exigible: son hipótesis distintas.
+
+**Se descarta si** en la variante B el signo se invierte o la expectativa cae a
+cero. Y ojo con el caso intermedio: signo consistente pero sin significancia
+*con mucha más muestra* es **mala** señal, no neutra. Si al multiplicar por seis
+las observaciones el t-estadístico no sube, lo que había no era una muestra
+corta: era ausencia de edge.
 
 **Por qué es tan barata y tan letal:** multiplica la muestra por 5-10 sin
 conseguir un solo dato nuevo. `squeeze_breakdown` pasó de +0,393 R (55

@@ -149,10 +149,14 @@ def main() -> int:
             funding = pd.Series(dtype=float)
 
         if not funding.empty:
-            # ffill con limite: arrastrar el ultimo funding conocido un par de
-            # dias es razonable, pero rellenar un hueco de meses inventaria un
-            # dato. Lo que quede en NaN desactiva la estrategia esas barras.
-            bars["funding_rate"] = funding.reindex(bars.index).ffill(limit=2)
+            # ffill con limite proporcional a la temporalidad: el funding se
+            # agrega a diario, asi que en barras de 4h hay que arrastrarlo 6
+            # barras para cubrir el dia. Un limite fijo de 2 dejaria la mayoria
+            # de las barras sub-diarias sin dato. El limite existe para no
+            # rellenar huecos de meses: eso seria inventar el dato.
+            por_dia = {"1d": 1, "12h": 2, "8h": 3, "4h": 6, "1h": 24,
+                       "30m": 48, "15m": 96, "5m": 288}.get(args.interval, 1)
+            bars["funding_rate"] = funding.reindex(bars.index).ffill(limit=2 * por_dia)
             cobertura = bars["funding_rate"].notna().mean()
             if cobertura < 0.95:
                 print(f"  [!] funding solo cubre el {cobertura:.0%} de las barras")

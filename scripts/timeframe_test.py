@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""Puerta 2.5: la misma estrategia en varias temporalidades.
+
+Hay dos formas de bajar de temporalidad, y responden a preguntas distintas.
+Confundirlas invalida la prueba:
+
+  A) **Parametros iguales.** Una EMA(20) sobre barras de 4h mide una tendencia
+     de 3,3 dias, no de 20. Es OTRA hipotesis: comprueba si el patron existe
+     tambien a escalas mas cortas, es decir, si es invariante de escala.
+
+  B) **Parametros escalados.** EMA(20) diaria equivale a EMA(120) en 4h. Mide
+     la MISMA ventana economica con 6 veces mas observaciones. Esto no es
+     reoptimizar -no se elige el valor por su resultado, se traduce-, y es la
+     prueba que de verdad multiplica la muestra de la hipotesis original.
+
+La estrategia deberia sobrevivir a B. Sobrevivir tambien a A seria mejor
+señal todavia, pero no es exigible.
+
+    python scripts/timeframe_test.py --strategy pullback_to_ema_short
+"""
+
+from __future__ import annotations
+
+import argparse
+import glob
+import os
+import sys
+
+import pandas as pd
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+
+from shortbot.backtest import BacktestConfig, CostModel  # noqa: E402
+from shortbot.data import load_csv  # noqa: E402
+from shortbot.evaluation import evaluate_universe, parameter_robustness, robustness_score  # noqa: E402
+from shortbot.markets import get_market  # noqa: E402
+from shortbot.strategies import STRATEGY_REGISTRY, build  # noqa: E402
+
+# Barras por dia de cada temporalidad en un mercado 24/7.
+BARRAS_POR_DIA = {"1d": 1, "4h": 6, "1h": 24, "15m": 96}
+
+# Parametros que son ventanas temporales y deben escalarse con la temporalidad.
+# Los que no aparecen aqui (umbrales, multiplos de ATR) NO se tocan: no son
+# ventanas, son niveles.
+VENTANAS = {
+    "pullback_ema", "fast_ema", "slow_ema", "atr_period", "channel",
+    "lookback", "trigger_lookback", "bb_period", "adx_period", "vol_period",
+    "rank_lookback", "width_lookback", "vol_lookback", "oi_lookback",
+    "run_bars", "max_bars", "ema_period", "rsi_period",
+}
+
+
+def escalar(params: dict, factor: int, tope: int = 1000) -> dict:
+    out = {}
+    for k, v in params.items():
+        if k in VENTANAS and isinstance(v, (int, float)) and v > 0:
+            out[k] = min(int(round(v * factor)), tope)
+    return out
+
+
+def cargar(patron: str) -> dict[str, pd.DataFrame]:
+    return {os.path.basename(p).split("_")[0]: load_csv(p)
+            for p in sorted(glob.glob(patron))}
+
+
+def config_para(profile, tf: str, risk: float) -> BacktestConfig:
+    """El carry es anual: hay que repartirlo entre las barras del año."""
+    ppy = 365 * BARRAS_POR_DIA[tf]
+    return BacktestConfig(risk_per_trade=risk, costs=CostModel(
+        profile.costs.commission_bps, profile.costs.slippage_bps,
+        profile.costs.borrow_annual_pct, periods_per_year=ppy))
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--strategy", default="pullback_to_ema_short")
+    ap.add_argument("--market", default="cripto")
+    ap.add_argument("--pattern", default="data/cripto/*_{tf}.csv")
+    ap.add_argument("--timeframes", nargs="+", default=["1d", "4h", "1h"])
+    ap.add_argument("--risk", type=float, default=0.01)
+    ap.add_argument("--grid", action="store_true", help="Anade barrido de robustez por temporalidad")
+    args = ap.parse_args()
+
+    profile = get_market(args.market)
+    base = build(args.strategy)
+    print(f"\nEstrategia: {base.name}\nTesis: {base.thesis}")
+    print(f"Parametros base (diario): {base.params}\n")
+
+    filas = []
+    for tf in args.timeframes:
+        uni = cargar(args.pattern.format(tf=tf))
+        if not uni:
+            print(f"[!] sin datos para {tf}")
+            continue
+        cfg = config_para(profile, tf, args.risk)
+        factor = BARRAS_POR_DIA[tf]
+        n_barras = sum(len(d) for d in uni.values())
+
+        variantes = [("A: parametros iguales", build(args.strategy))]
+        if factor > 1:
+            variantes.append((f"B: ventanas x{factor}",
+                              build(args.strategy, **escalar(base.params, factor))))
+
+        for etiqueta, est in variantes:
+            r = evaluate_universe(est, uni, None, cfg)
+            fila = {"tf": tf, "variante": etiqueta, "barras": n_barras,
+                    "n": r["trades"], "E[R]": r["expectancy_r"], "t": r["t_stat"],
+                    "acierto": r["win_rate"], "PF": r["profit_factor"],
+                    "activos+": r["assets_positive"], "peor": r["worst_trade_r"]}
+            filas.append(fila)
+            if tf == "1d" and factor == 1:
+                continue
+
+    tabla = pd.DataFrame(filas)
+    num = tabla.select_dtypes("number")
+    tabla[num.columns] = num.round(3)
+    print("=" * 112)
+    print("PUERTA 2.5 - TEMPORALIDAD CRUZADA")
+    print("=" * 112)
+    print(tabla.to_string(index=False))
+
+    # --- Veredicto ---
+    print("\n" + "-" * 112)
+    b = tabla[tabla["variante"].str.startswith("B")]
+    diario = tabla[(tabla["tf"] == "1d")]
+    e_diario = float(diario["E[R]"].iloc[0]) if len(diario) else float("nan")
+
+    print(f"Referencia diaria: E[R]={e_diario:+.3f}")
+    if b.empty:
+        print("Sin variante escalada: no se puede concluir.")
+        return 0
+
+    validas = b[b["n"] >= 30]
+    positivas = int((validas["E[R]"] > 0).sum())
+    significativas = int((validas["t"] > 2).sum())
+    print(f"Variante B (misma ventana economica, mas muestra): "
+          f"{positivas}/{len(validas)} positivas, {significativas} con t>2")
+
+    if len(validas) and positivas == len(validas) and significativas:
+        print("\nVEREDICTO: SUPERA la puerta 2.5. El edge sobrevive con mas muestra.")
+    elif len(validas) and positivas == len(validas):
+        print("\nVEREDICTO: signo consistente pero sin significancia. "
+              "Sigue sin distinguirse del ruido, ahora con mas datos: mala señal.")
+    else:
+        print("\nVEREDICTO: NO SUPERA. El edge diario no aparece al aumentar la muestra.")
+
+    if args.grid:
+        print("\n" + "=" * 112)
+        print("MESETA DE PARAMETROS POR TEMPORALIDAD")
+        print("=" * 112)
+        for tf in args.timeframes:
+            uni = cargar(args.pattern.format(tf=tf))
+            if not uni:
+                continue
+            f = BARRAS_POR_DIA[tf]
+            rejilla = parameter_robustness(
+                STRATEGY_REGISTRY[args.strategy],
+                {"pullback_ema": [max(2, int(10 * f)), int(20 * f), int(30 * f)],
+                 "stop_atr": [1.5, 2.0, 2.5]},
+                uni, None, config_para(profile, tf, args.risk))
+            sc = robustness_score(rejilla, min_trades=30)
+            print(f"  {tf}: {sc['combos_validos']} combos validos, "
+                  f"{sc['pct_positivos']:.0%} positivos, mediana {sc['expectancy_mediana']:+.3f}"
+                  if sc["combos_validos"] else f"  {tf}: sin combinaciones con muestra suficiente")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
