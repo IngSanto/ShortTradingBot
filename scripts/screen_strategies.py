@@ -22,7 +22,13 @@ import pandas as pd
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from shortbot.backtest import BacktestConfig, CostModel  # noqa: E402
-from shortbot.data import load_csv, synthetic_ohlcv, synthetic_universe  # noqa: E402
+from shortbot.data import (  # noqa: E402
+    load_csv,
+    synthetic_ohlcv,
+    synthetic_perp_universe,
+    synthetic_universe,
+)
+from shortbot.markets import MERCADOS, get_market  # noqa: E402
 from shortbot.evaluation import (  # noqa: E402
     evaluate_universe,
     parameter_robustness,
@@ -42,9 +48,12 @@ ROBUSTNESS_GRIDS = {
 }
 
 
-def load_universe(patterns: list[str] | None, n_assets: int, n_bars: int):
+def load_universe(patterns: list[str] | None, n_assets: int, n_bars: int, market: str):
     if not patterns:
-        universe = synthetic_universe(n_assets, n=n_bars)
+        # En cripto la serie sintetica incluye funding y open interest, sin los
+        # cuales las dos estrategias de esa familia no generan senal alguna.
+        universe = (synthetic_perp_universe(n_assets, n=n_bars) if market == "cripto"
+                    else synthetic_universe(n_assets, n=n_bars))
         benchmark = synthetic_ohlcv(n=n_bars, seed=999)["close"]
         return universe, benchmark, True
 
@@ -63,27 +72,44 @@ def load_universe(patterns: list[str] | None, n_assets: int, n_bars: int):
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--market", default="acciones", choices=sorted(MERCADOS),
+                    help="Perfil de mercado: fija costes, carry y dias por anio")
     ap.add_argument("--data", nargs="*", help="Patrones glob de CSV con columnas date,open,high,low,close,volume")
     ap.add_argument("--assets", type=int, default=10, help="Activos sinteticos (por defecto 10)")
     ap.add_argument("--bars", type=int, default=2500, help="Barras por activo (por defecto 2500 ~ 10 anios)")
-    ap.add_argument("--borrow", type=float, default=3.0, help="Coste de prestamo anual %% (por defecto 3)")
-    ap.add_argument("--slippage", type=float, default=5.0, help="Slippage en bps por lado (por defecto 5)")
+    ap.add_argument("--borrow", type=float, default=None,
+                    help="Sobrescribe el carry anual %% del perfil (negativo = lo cobras)")
+    ap.add_argument("--slippage", type=float, default=None,
+                    help="Sobrescribe el slippage en bps por lado")
     ap.add_argument("--risk", type=float, default=0.01, help="Riesgo por operacion (por defecto 1%%)")
     ap.add_argument("--robustness", action="store_true", help="Anade el barrido de parametros")
     ap.add_argument("--regimes", action="store_true", help="Desglose por regimen (solo datos sinteticos)")
     ap.add_argument("--out", help="Guarda la tabla resumen en este CSV")
     args = ap.parse_args()
 
-    universe, benchmark, is_synthetic = load_universe(args.data, args.assets, args.bars)
-    config = BacktestConfig(
-        risk_per_trade=args.risk,
-        costs=CostModel(borrow_annual_pct=args.borrow, slippage_bps=args.slippage),
+    profile = get_market(args.market)
+    universe, benchmark, is_synthetic = load_universe(
+        args.data, args.assets, args.bars, args.market
     )
 
-    print(f"\nUniverso: {len(universe)} activos x {len(next(iter(universe.values())))} barras "
-          f"({'SINTETICO' if is_synthetic else 'datos reales'})")
-    print(f"Costes: {args.slippage} bps slippage/lado + 2 bps comision + {args.borrow}% borrow anual")
-    print(f"Riesgo por operacion: {args.risk:.1%} del capital\n")
+    base = profile.costs
+    costs = CostModel(
+        commission_bps=base.commission_bps,
+        slippage_bps=args.slippage if args.slippage is not None else base.slippage_bps,
+        borrow_annual_pct=args.borrow if args.borrow is not None else base.borrow_annual_pct,
+        periods_per_year=base.periods_per_year,
+    )
+    config = BacktestConfig(risk_per_trade=args.risk, costs=costs)
+
+    carry = costs.borrow_annual_pct
+    carry_txt = (f"{abs(carry):.1f}% anual QUE COBRAS" if carry < 0
+                 else f"{carry:.1f}% anual que pagas")
+    print(f"\nMercado : {profile.nombre} ({profile.periods_per_year} barras/anio)")
+    print(f"Universo: {len(universe)} activos x {len(next(iter(universe.values())))} barras "
+          f"({'SINTETICO' if is_synthetic else 'DATOS REALES'})")
+    print(f"Costes  : {costs.slippage_bps} bps slippage/lado + {costs.commission_bps} bps comision")
+    print(f"Carry   : {carry_txt}")
+    print(f"Riesgo  : {args.risk:.1%} del capital por operacion\n")
 
     rows = []
     for strategy in build_all():
@@ -135,7 +161,10 @@ def main() -> int:
         table.to_csv(args.out, index=False)
         print(f"\nTabla guardada en {args.out}")
 
-    print("\nRecordatorio: sobre datos sinteticos esta tabla valida el CODIGO, no el EDGE.")
+    if is_synthetic:
+        print("\nRecordatorio: sobre datos sinteticos esta tabla valida el CODIGO, no el EDGE.")
+        print("Para validar el edge: python scripts/fetch_data.py --market "
+              f"{args.market}  (requiere internet)")
     return 0
 
 

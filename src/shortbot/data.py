@@ -143,3 +143,34 @@ def regime_series(df: pd.DataFrame) -> pd.Series:
 def synthetic_universe(n_assets: int = 8, **kwargs) -> dict[str, pd.DataFrame]:
     """Varios activos con semillas distintas, para pruebas cross-sectional."""
     return {f"SYN{i:02d}": synthetic_ohlcv(seed=100 + i, **kwargs) for i in range(n_assets)}
+
+
+def synthetic_perp(n: int = 2000, seed: int = 7, **kwargs) -> pd.DataFrame:
+    """Serie de perpetuo con ``funding_rate`` y ``open_interest`` sinteticos.
+
+    El funding se modela como funcion del impulso reciente del precio, que es
+    como se comporta en la realidad: cuando el precio sube, los largos se
+    apalancan y pagan cada vez mas por mantener la posicion. El open interest
+    crece con las tendencias y se desploma tras las caidas fuertes
+    (liquidaciones).
+    """
+    rng = np.random.default_rng(seed + 5000)
+    df = synthetic_ohlcv(n=n, seed=seed, **kwargs)
+
+    momentum = df["close"].pct_change(5).fillna(0.0)
+    base_funding = 0.0003                      # 0,03% diario ~ 11% anual
+    funding = base_funding + 0.020 * momentum + rng.normal(0, 0.00015, n)
+    df["funding_rate"] = funding.clip(-0.003, 0.005)
+
+    trend = df["close"].pct_change(10).fillna(0.0)
+    oi = 1e8 * np.exp(np.cumsum(0.35 * trend.to_numpy() + rng.normal(0, 0.01, n)))
+    # Purga de open interest tras caidas fuertes: la cascada de liquidaciones.
+    flush = df["close"].pct_change(3).fillna(0.0) < -0.08
+    df["open_interest"] = pd.Series(oi, index=df.index).where(~flush, pd.Series(oi, index=df.index) * 0.75)
+    return df
+
+
+def synthetic_perp_universe(n_assets: int = 6, **kwargs) -> dict[str, pd.DataFrame]:
+    symbols = ["BTC", "ETH", "SOL", "BNB", "XRP", "DOGE", "AVAX", "LINK"]
+    return {symbols[i % len(symbols)]: synthetic_perp(seed=200 + i, **kwargs)
+            for i in range(n_assets)}

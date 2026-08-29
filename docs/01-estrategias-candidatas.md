@@ -133,19 +133,17 @@ buscarlas y falla, deja compradores atrapados: ése es el combustible de la caí
 No están implementadas porque necesitan fuentes adicionales. Dos de ellas son,
 en mi opinión, las **más prometedoras de todo el documento**.
 
-#### D1. Pairs trading / neutral al mercado ⭐
+#### D1. Pairs trading / neutral al mercado — ❌ DESCARTADA (requiere pata larga)
 - **Idea:** dos activos cointegrados (mismo sector, misma cadena de valor). Cuando el spread se abre más de 2 desviaciones, corto el caro y largo el barato.
 - **Por qué destaca:** es la **única** familia que elimina de raíz la deriva alcista (condición 1). Tu resultado no depende de que el mercado baje. Además, el largo financia parcialmente el coste del préstamo del corto.
 - **Requiere:** precios de un universo sectorial + test de cointegración (Engle-Granger o Johansen) con reestimación periódica.
 - **Riesgo principal:** la relación se rompe (fusión, cambio regulatorio, un negocio que se hunde de verdad). Obligatorio un stop temporal además del de precio.
-- **Prioridad: MÁXIMA.**
+- **Prioridad: descartada** por la decisión de operar **solo en corto** (ver §4). Se documenta porque es la respuesta correcta si algún día se levanta esa restricción: es la única familia que elimina de raíz el problema nº1 del lado corto.
 
-#### D2. Fade del funding extremo en perpetuos (cripto) ⭐
+#### D2. Fade del funding extremo en perpetuos (cripto) → implementada como E1
 - **Idea:** en los futuros perpetuos, cuando el funding se dispara en positivo, los largos apalancados están pagando a los cortos. Es una medida **directa y observable** de posicionamiento alcista saturado.
 - **Por qué destaca:** cumple tres condiciones a la vez — no hay deriva estructural que combatir, el desequilibrio de flujo es medible en tiempo real (condición 3) y **cobras carry mientras esperas** en lugar de pagarlo. Es el único caso del catálogo donde el tiempo juega a tu favor estando corto.
-- **Requiere:** histórico de funding + open interest (API de Binance/Bybit vía `ccxt`).
-- **Riesgo principal:** riesgo de contraparte/exchange y liquidaciones en cascada. El tamaño lo es todo.
-- **Prioridad: MÁXIMA** si aceptamos operar cripto.
+- **Estado: ya no es pendiente.** Implementada en `src/shortbot/strategies/crypto.py` junto con la descarga de funding. Ver E1.
 
 #### D3. Deriva post-resultados negativa (PEAD corto)
 - **Idea:** tras una sorpresa negativa en resultados, el precio sigue derivando a la baja durante semanas. Anomalía documentada desde los años 60.
@@ -164,68 +162,134 @@ en mi opinión, las **más prometedoras de todo el documento**.
 - **Riesgo:** el efecto es pequeño frente a los costes y se lo comen las comisiones si se opera a diario.
 - **Prioridad: BAJA.** Interesante como *modulador* de las otras (cerrar antes del cierre), no como estrategia propia.
 
+### Familia E — Específicas de perpetuos de cripto ⭐
+
+Tesis común: en un futuro perpetuo el **funding** es una medida directa y
+observable del posicionamiento. No hay que inferir el desequilibrio a partir del
+precio: se lee.
+
+#### E1. `funding_fade_short` — Fade del funding extremo
+- **Reglas:** funding en el percentil ≥90 de las últimas 90 barras **y** por encima de un suelo absoluto (0,05% diario ≈ 18% anualizado) **y** barra de giro (cierre < apertura) → corto. Sale cuando el funding vuelve a su mediana.
+- **Por qué destaca:** cumple tres de las cuatro condiciones a la vez. No hay deriva estructural que combatir, el desequilibrio de flujo es medible en tiempo real, y sobre todo **cobras carry mientras esperas**. Es la única estrategia del catálogo en la que el paso del tiempo juega a favor del corto.
+- **Cómo falla:** el funding puede seguir extremo durante semanas en un mercado alcista fuerte. El suelo absoluto y la barra de giro existen para no vender en plena euforia, pero no eliminan el riesgo.
+- **Datos:** OHLCV + histórico de funding vía `ccxt`. **Gratuito y ya implementado** (`scripts/fetch_data.py --market cripto`).
+- **Prioridad: MÁXIMA.**
+
+#### E2. `oi_flush_short` — Cascada de liquidaciones
+- **Reglas:** el open interest crece ≥10% a la vez que el precio sube ≥5% en 10 barras (las posiciones nuevas son mayoritariamente largas apalancadas) y después el precio pierde el mínimo de 5 barras → corto.
+- **Por qué podría funcionar:** las posiciones largas apalancadas tienen un precio de liquidación conocido y mecánico. Cuando se cruza, el exchange las cierra a mercado: venta forzada que alimenta más venta forzada. Es el mismo tipo de lógica causal que `failed_breakout_short`, pero con el combustible medido en lugar de supuesto.
+- **Cómo falla:** llegar tarde. Cuando la cascada es visible en barras diarias, gran parte del movimiento ya ocurrió. Probablemente necesite temporalidad intradía.
+- **Datos:** open interest histórico (`ccxt`, disponibilidad según exchange).
+- **Prioridad: ALTA.**
+
 ---
 
-## 3. Mi recomendación: por dónde empezar
+## 3. Decisiones tomadas
 
-Ordenadas por probabilidad de sobrevivir a una validación seria:
+Dos decisiones acotan el catálogo, y conviene tenerlas explícitas porque
+descartan opciones que de otro modo serían las primeras candidatas:
 
-| # | Estrategia | Familia | Por qué está aquí | Qué necesita |
+| Decisión | Consecuencia |
+|---|---|
+| **Solo corto, sin cobertura larga** | Queda descartado el pairs trading (D1), que era la única familia capaz de neutralizar la deriva alcista. `relative_weakness_short` sigue en juego, pero como corto puro: pierde el beneficio de neutralización y conserva solo la señal de factor. |
+| **Validar en los tres mercados** | Acciones, cripto y futuros con el mismo catálogo y costes propios de cada uno. Decide el mercado con datos, no a priori. |
+
+**Lo que implica la primera:** al renunciar a la pata larga, el peso recae en las
+otras tres condiciones de la §1 — exposición corta en el tiempo, desequilibrio de
+flujo identificable, y selectividad por régimen. Las estrategias que solo
+cumplían "neutraliza la deriva" ya no tienen argumento.
+
+---
+
+## 4. Cuánto pesa el mercado: la medida
+
+`python scripts/compare_markets.py` ejecuta el **mismo universo de precios** y las
+**mismas señales** bajo los tres perfiles. Como los precios no cambian, toda la
+diferencia es atribuible a costes y carry:
+
+| Estrategia | Acciones | Cripto | Futuros | Ventaja cripto | Barras en mercado |
+|---|---|---|---|---|---|
+| `relative_weakness_short` | +0,084 | **+0,238** | +0,137 | **+0,154 R** | 41 |
+| `donchian_breakdown` | −0,050 | **+0,047** | −0,013 | +0,097 R | 24 |
+| `squeeze_breakdown` | −0,153 | −0,070 | −0,117 | +0,083 R | 13 |
+| `pullback_to_ema_short` | −0,124 | −0,045 | −0,089 | +0,079 R | 13 |
+| `failed_breakout_short` | −0,271 | −0,213 | −0,238 | +0,057 R | 8 |
+| `rsi2_fade` | −0,035 | −0,015 | −0,018 | +0,019 R | 5 |
+
+**El hallazgo, y no depende de que los precios sean sintéticos:** la ventaja de
+cripto es **proporcional al tiempo en mercado**. El carry es determinista dado el
+número de barras; lo único que hace el precio es añadir ruido alrededor.
+
+- Un corto en acciones **paga** ~1,19 bps/día de préstamo.
+- Un corto en perpetuos **cobra** ~2,74 bps/día de funding.
+- Diferencia: ~3,9 bps/día. En 40 barras son ~1,6% de nocional, del orden de magnitud de un edge entero.
+
+**Consecuencia operativa directa:**
+
+1. Las estrategias **de tendencia** (20-40 barras) solo tienen sentido en cripto o futuros. En acciones, el préstamo se come el resultado antes de que la tendencia lo genere.
+2. Las estrategias **de horizonte corto** (4-8 barras) son casi indiferentes al mercado en cuanto a carry. Ahí la elección la deciden el riesgo de hueco (alto en acciones, inexistente en cripto 24/7) y la calidad de la ejecución.
+3. En **acciones**, si insistimos en solo-corto, hay que limitarse a horizontes cortos y a valores baratos de tomar prestados. Es el mercado más difícil de los tres para este mandato, y ahora tenemos el número que lo cuantifica.
+
+---
+
+## 5. Orden de trabajo recomendado
+
+| # | Estrategia | Mercado prioritario | Por qué | Estado |
 |---|---|---|---|---|
-| 1 | **Pairs / neutral al mercado** (D1) | Spread | Elimina la deriva, el problema nº1 del corto | Universo sectorial + cointegración |
-| 2 | **Fade de funding** (D2) | Cripto | Cobras carry mientras esperas; flujo observable | API de exchange (`ccxt`) |
-| 3 | **`failed_breakout_short`** (C1) | Estructura | Tesis causal, stop ajustado, exposición corta | Nada: **operable hoy** |
-| 4 | **`pullback_to_ema_short`** (B2) | Tendencia | Mejor R:R de la familia mejor documentada | Nada: **operable hoy** |
-| 5 | **`relative_weakness_short`** (B3) | Factor | Factor académico sólido; ideal como pata corta | Índice de referencia |
-| 6 | **`donchian_breakdown`** (B1) | Tendencia | Línea base obligatoria del seguimiento de tendencia | Nada: **operable hoy** |
+| 1 | **`funding_fade_short`** (E1) | Cripto | Única con carry a favor y flujo observable directamente | Implementada; falta descargar funding |
+| 2 | **`failed_breakout_short`** (C1) | Los tres | Tesis causal, stop ajustado, horizonte corto → poco sensible al carry | Operable hoy |
+| 3 | **`pullback_to_ema_short`** (B2) | Cripto / futuros | Mejor R:R de la familia mejor documentada | Operable hoy |
+| 4 | **`donchian_breakdown`** (B1) | Cripto / futuros | Línea base obligatoria del seguimiento de tendencia | Operable hoy |
+| 5 | **`oi_flush_short`** (E2) | Cripto | Combustible de la caída medido, no supuesto | Implementada; falta open interest |
+| 6 | **`relative_weakness_short`** (B3) | Acciones | Factor sólido, pero sin pata larga pierde su mejor argumento | Operable hoy |
 
-**Descartadas de entrada para dinero real** (se mantienen en el laboratorio):
-`volatility_spike_exhaustion` y `parabolic_extension_fade` por riesgo de ruina;
-`bollinger_upper_fade` como mera línea base.
+**Fuera de producción** (se quedan en el laboratorio): `volatility_spike_exhaustion`
+y `parabolic_extension_fade` por riesgo de ruina; `bollinger_upper_fade` y
+`gap_up_fade` como líneas base — esta última solo sería interesante con datos
+intradía y filtro de noticias.
 
-**Y una capa que no es negociable:** el filtro de aglomeración (D4) por encima de
-todo lo demás. Ninguna estrategia de este catálogo debería enviar una orden real
-sobre un valor difícil de tomar prestado o con interés corto extremo.
-
----
-
-## 4. La decisión que condiciona todo lo demás
-
-Antes de invertir horas de validación hay que fijar el **mercado**, porque cambia
-qué estrategias tienen sentido:
-
-| | Acciones (EEUU/EU) | Cripto (perpetuos) | Futuros (índices, materias primas) |
-|---|---|---|---|
-| Deriva en contra | Alta (~8%/año) | No persistente | Baja |
-| Coste de estar corto | Préstamo 0,3-50% | **Funding: a menudo cobras** | Casi nulo |
-| Riesgo de squeeze | Alto en small caps | Alto (liquidaciones) | Bajo |
-| Restricciones | Uptick rule, prohibiciones, recall | Ninguna | Ninguna |
-| Horario | Sesión + huecos nocturnos | 24/7, **sin huecos** | Casi 24h |
-| Datos históricos | Buenos y baratos | Excelentes y gratuitos | Buenos |
-| Capital mínimo | Cuenta de margen (25k USD para day trading en EEUU) | Bajo | Medio-alto |
-
-**Lectura honesta:** para un bot *short-only*, cripto y futuros son terreno
-estructuralmente más favorable que las acciones. En acciones, el planteamiento
-que más probabilidades tiene de funcionar no es *short-only* sino **largo/corto
-neutral**. Si el requisito es que el bot solo opere en corto y en acciones,
-estamos eligiendo el escenario más difícil de los tres: se puede, pero conviene
-saberlo antes de invertir meses.
+**Capa transversal no negociable:** el filtro de aglomeración (D4). En acciones,
+veto por interés corto y coste de préstamo; en cripto, veto por open interest
+extremo y profundidad de libro. Ninguna estrategia debería enviar una orden real
+sin pasar por ahí.
 
 ---
 
-## 5. Estado actual del código
+## 6. Estado actual del código
 
-Las diez estrategias de las familias A, B y C están implementadas y pasan la
-criba automática:
+Doce estrategias implementadas (familias A, B, C y E) sobre un contrato común:
 
 ```bash
 pip install -r requirements.txt
-python scripts/screen_strategies.py --regimes --robustness
-python -m pytest tests/ -q
+
+python scripts/screen_strategies.py --market cripto --regimes   # criba
+python scripts/compare_markets.py                               # peso del mercado
+python -m pytest tests/ -q                                      # 13 pruebas
 ```
 
-Sobre datos sintéticos **todas dan expectativa negativa**, y eso es la respuesta
-correcta: un paseo aleatorio con deriva positiva no contiene ninguna estructura
-explotable, así que tras costes cualquier sistema debe perder. Sirve para
-validar que **el motor no fabrica alfa de la nada** (`tests/test_backtest.py`),
-no para elegir estrategia. Esa elección exige datos reales — el siguiente paso.
+Sobre datos sintéticos casi todas dan expectativa negativa, y eso es la respuesta
+correcta: un paseo aleatorio no contiene estructura explotable, así que tras
+costes cualquier sistema debe perder. Sirve para validar que **el motor no
+fabrica alfa de la nada** (`tests/test_backtest.py::test_entradas_aleatorias_sin_deriva_dan_expectativa_nula`),
+no para elegir estrategia.
+
+### El bloqueo actual
+
+`scripts/fetch_data.py` está escrito y probado hasta donde llega sin red, pero
+**no se puede ejecutar desde el entorno de desarrollo**: la política de red solo
+permite registros de paquetes. Yahoo Finance, Binance, Bybit, Kraken y Stooq
+devuelven todos 403 en el túnel del proxy.
+
+Hay que ejecutarlo en una máquina con salida a internet:
+
+```bash
+python scripts/fetch_data.py --market cripto   --start 2019-01-01
+python scripts/fetch_data.py --market acciones --start 2010-01-01
+python scripts/fetch_data.py --market futuros  --start 2010-01-01
+
+python scripts/screen_strategies.py --market cripto --data "data/cripto/*.csv" --robustness
+```
+
+Hasta que eso ocurra, **ninguna cifra de este documento es evidencia de edge**.
+Lo que sí está validado es el instrumento de medida: el motor, los costes de
+cada mercado y el efecto cuantificado del carry.
