@@ -28,7 +28,11 @@ def _validate(df: pd.DataFrame) -> pd.DataFrame:
     if "volume" not in df.columns:
         df["volume"] = np.nan
     df = df[~df.index.duplicated(keep="last")].sort_index()
-    return df[OHLCV].astype(float)
+    # Se conservan las columnas extra (funding_rate, open_interest...): recortar
+    # a OHLCV dejaba mudas a las estrategias que dependen de ellas, y sin error,
+    # que es la peor forma de fallar.
+    extra = [c for c in df.columns if c not in OHLCV]
+    return df[OHLCV + extra].astype(float)
 
 
 def load_csv(path: str, date_col: str = "date") -> pd.DataFrame:

@@ -103,3 +103,23 @@ def test_las_estrategias_con_filtro_de_volumen_operan_sin_ese_dato():
     # Y al menos una de las dos debe seguir operando sin el dato.
     assert build("failed_breakout_short").generate_signals(
         sin_volumen, None)["entry"].sum() > 0
+
+
+def test_cargar_csv_conserva_funding_y_open_interest(tmp_path):
+    """Regresion: load_csv recortaba a OHLCV y descartaba funding_rate, así que
+    funding_fade_short se quedaba sin señales sin dar ningún error."""
+    import pandas as pd
+
+    from shortbot.data import load_csv, synthetic_perp
+
+    df = synthetic_perp(n=300, seed=3)
+    path = tmp_path / "PERP_1d.csv"
+    df.to_csv(path, index_label="date")
+
+    cargado = load_csv(str(path))
+    assert "funding_rate" in cargado.columns
+    assert "open_interest" in cargado.columns
+    assert cargado["funding_rate"].notna().all()
+
+    # Y la estrategia debe operar con el CSV recargado, no solo en memoria.
+    assert build("funding_fade_short").generate_signals(cargado, None)["entry"].sum() > 0

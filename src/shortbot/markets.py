@@ -73,10 +73,14 @@ CRIPTO_PERP = MarketProfile(
     costs=CostModel(
         commission_bps=4.5,      # taker; con maker se reduce mucho
         slippage_bps=5.0,
-        # NEGATIVO = ingreso. Con funding medio historicamente positivo, el
-        # corto COBRA por mantener la posicion. Es el supuesto mas importante
-        # de todo el perfil: sustituir por la serie real de funding.
-        borrow_annual_pct=-10.0,
+        # NEGATIVO = ingreso: con funding positivo, el corto COBRA por mantener
+        # la posicion. Ya no es un supuesto: es la mediana medida sobre 10
+        # perpetuos de Binance entre 2020 y 2026 (+9,2% anual, positivo el
+        # 70-88% de los dias). Se usa la MEDIANA y no la media porque eventos
+        # como el colapso de FTX (-17% de funding diario en SOL) distorsionan
+        # la media hasta dejarla en cero.
+        # Excepcion medida: BNBUSDT publica funding cero la mayoria de los dias.
+        borrow_annual_pct=-9.2,
         periods_per_year=365,
     ),
     universo_sugerido=(
