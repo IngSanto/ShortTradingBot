@@ -15,6 +15,8 @@ filtros, no por una corazonada.
 | [`docs/01-estrategias-candidatas.md`](docs/01-estrategias-candidatas.md) | **Empieza aquí.** Catálogo de 17 estrategias en corto: tesis, reglas exactas, cómo falla cada una y en qué orden probarlas. Incluye cuánto pesa elegir mercado. |
 | [`docs/02-metodologia-validacion.md`](docs/02-metodologia-validacion.md) | Las puertas de validación, el escalado a real y la gestión de riesgo específica del corto. |
 | [`docs/03-resultados-datos-reales.md`](docs/03-resultados-datos-reales.md) | **Resultados sobre datos reales.** Qué sobrevive, qué se ha descartado y por qué. Se actualiza con cada tanda. |
+| [`docs/04-teoria-propia.md`](docs/04-teoria-propia.md) | Teoría propia CBRC: hipótesis, predicciones declaradas y su falsación. |
+| [`config/catalogo.json`](config/catalogo.json) | **El catálogo.** Estrategias aprobadas para paper, en observación y descartadas con su motivo. |
 
 ## Puesta en marcha
 
@@ -37,6 +39,10 @@ python scripts/screen_strategies.py --market cripto --regimes --robustness
 
 # 3. Cuánto pesa el mercado, con la estrategia constante
 python scripts/compare_markets.py
+
+# 4. Paper trading (puerta 4)
+python scripts/paper_run.py --actualizar   # avanza un día
+python scripts/paper_run.py --informe      # solo el informe
 
 # Pruebas del motor
 python -m pytest tests/ -q
@@ -103,7 +109,9 @@ cripto o futuros; en acciones el préstamo se come el resultado.
 - [ ] **Universo real de los tres mercados** — bloqueado: la política de red de este entorno deniega Yahoo, Binance, Bybit, Kraken, Stooq, CoinGecko, Polygon y Alpha Vantage. Solo `raw.githubusercontent.com` es accesible. Requiere una máquina con salida a internet.
 - [ ] Histórico de funding y open interest — sin ellos, las dos estrategias con mejor tesis siguen sin evaluar
 - [x] Validación sobre histórico real: **2 de 12 estrategias superan las puertas 1 a 3**
-- [ ] Paper trading (puerta 4) — nada listo para dinero real hasta completarlo
+- [x] Catálogo de estrategias aprobadas (`config/catalogo.json`)
+- [ ] **Paper trading (puerta 4) — EN CURSO** desde 2026-08-30. `pullback_to_ema_short` al 0,1%, workflow diario. Mínimo 60 sesiones o 50 operaciones.
+- [ ] Dinero real con escalado gradual — nada hasta que la puerta 4 termine
 - [ ] Operativa real con escalado gradual
 
 > Nada de este repo es asesoramiento financiero. Operar en corto puede generar
