@@ -7,10 +7,18 @@ venv/
 .ipynb_checkpoints/
 results/
 
-# El estado del paper trading SI se versiona: es el registro de la puerta 4
-# y su valor esta en que no se pueda rehacer.
-!state/
-
-# Los datos de mercado se reconstruyen con scripts/fetch_*.py: no van a git.
+# Los datos de mercado se reconstruyen con scripts/fetch_*.py y no van a git...
 data/**
-!data/.gitkeep
+
+# ...con una excepción: el universo diario de cripto SÍ se versiona (5 MB).
+# El paper trading lo necesita para calcular la EMA(200), y sin él la Action
+# arrancaría sin histórico y omitiría todos los símbolos. Además hace el
+# registro de la puerta 4 autocontenido y auditable: cualquiera puede
+# reproducir exactamente sobre qué precios se tomó cada decisión.
+!data/cripto/
+!data/cripto/*_1d.csv
+
+# El estado del paper trading se versiona: es el registro de la puerta 4 y su
+# valor está en que no se pueda rehacer.
+!state/
+!state/*.json
