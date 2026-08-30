@@ -7,6 +7,10 @@ venv/
 .ipynb_checkpoints/
 results/
 
+# El estado del paper trading SI se versiona: es el registro de la puerta 4
+# y su valor esta en que no se pueda rehacer.
+!state/
+
 # Los datos de mercado se reconstruyen con scripts/fetch_*.py: no van a git.
 data/**
 !data/.gitkeep

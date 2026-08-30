@@ -114,6 +114,55 @@ def descargar_funding(symbol: str, meses: list[str]) -> pd.Series:
     return out.set_index("date")[col_tasa].astype(float).resample("D").sum(min_count=1)
 
 
+def actualizar_reciente(symbol: str, interval: str, dias: int) -> pd.DataFrame:
+    """Barras de los ultimos dias desde los ficheros DIARIOS del archivo.
+
+    Los ficheros mensuales solo se publican al cerrar el mes, asi que el mes en
+    curso solo existe en formato diario. Sin esto, el paper trading se quedaria
+    congelado hasta el dia 1 del mes siguiente.
+
+    El archivo va 1-2 dias por detras del mercado: es el retraso que
+    `--retraso` modela en paper_run.py, y esta medido en docs/03.
+    """
+    hoy = pd.Timestamp.now("UTC").tz_localize(None).normalize()
+    trozos = []
+    for k in range(dias, 0, -1):
+        dia = (hoy - pd.Timedelta(days=k)).strftime("%Y-%m-%d")
+        url = f"{BASE.replace('/monthly', '/daily')}/klines/{symbol}/{interval}/{symbol}-{interval}-{dia}.zip"
+        df = _descargar_zip(url)
+        if df is None:
+            continue
+        df.columns = KLINE_COLS[:len(df.columns)]
+        trozos.append(df)
+    if not trozos:
+        return pd.DataFrame()
+
+    out = pd.concat(trozos, ignore_index=True)
+    ts = out["open_time"].astype("int64")
+    unidad = "us" if ts.iloc[0] > 1e15 else "ms"
+    out["date"] = pd.to_datetime(ts, unit=unidad, utc=True).dt.tz_localize(None)
+    out = out.set_index("date").sort_index()
+    return out[["open", "high", "low", "close", "volume"]].astype(float)
+
+
+def fusionar(path: str, nuevas: pd.DataFrame) -> int:
+    """Anade barras nuevas a un CSV existente sin duplicar ni reescribir el pasado."""
+    if nuevas.empty:
+        return 0
+    if os.path.exists(path):
+        viejo = pd.read_csv(path, parse_dates=["date"]).set_index("date")
+        # Las barras ya guardadas mandan: reescribir el pasado en un sistema que
+        # ya ha operado sobre el equivaldria a falsear el registro.
+        solo_nuevas = nuevas[~nuevas.index.isin(viejo.index)]
+        if solo_nuevas.empty:
+            return 0
+        combinado = pd.concat([viejo, solo_nuevas]).sort_index()
+    else:
+        solo_nuevas, combinado = nuevas, nuevas
+    combinado.to_csv(path, index_label="date")
+    return len(solo_nuevas)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -124,9 +173,34 @@ def main() -> int:
     ap.add_argument("--interval", default="1d", help="1d, 4h, 1h, 15m...")
     ap.add_argument("--start", default="2020-01", help="Mes inicial YYYY-MM")
     ap.add_argument("--end", default=None, help="Mes final YYYY-MM")
+    ap.add_argument("--recientes", type=int, default=0,
+                    help="En vez de meses, anade los ultimos N dias desde los "
+                         "ficheros diarios (para mantener el paper al dia)")
     args = ap.parse_args()
 
     os.makedirs(DATA_DIR, exist_ok=True)
+
+    if args.recientes:
+        print(f"\nActualizando los ultimos {args.recientes} dias "
+              f"({len(args.symbols)} simbolos, {args.interval})\n")
+        total = 0
+        for symbol in args.symbols:
+            path = os.path.join(DATA_DIR, f"{symbol}_{args.interval}.csv")
+            if not os.path.exists(path):
+                print(f"  [-] {symbol}: sin historico previo, se omite")
+                continue
+            try:
+                nuevas = actualizar_reciente(symbol, args.interval, args.recientes)
+            except Exception as exc:
+                print(f"  [x] {symbol}: {type(exc).__name__}: {exc}")
+                continue
+            n = fusionar(path, nuevas)
+            total += n
+            ultima = pd.read_csv(path, parse_dates=["date"])["date"].max().date()
+            print(f"  [v] {symbol}: +{n} barras (hasta {ultima})")
+        print(f"\n{total} barras nuevas en total.")
+        return 0
+
     meses = _meses(args.start, args.end)
     print(f"\n{len(args.symbols)} simbolos x {len(meses)} meses ({meses[0]} -> {meses[-1]})")
 

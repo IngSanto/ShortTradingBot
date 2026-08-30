@@ -54,6 +54,10 @@ class BacktestConfig:
     default_stop_atr: float = 2.0
     default_target_atr: float = 3.0
     default_max_bars: int = 10
+    # Barras EXTRA de retraso entre la senal y la ejecucion. 0 = comportamiento
+    # normal (senal al cierre de t, entrada en la apertura de t+1). Subirlo
+    # simula llegar tarde: feed con retraso, revision manual, ejecucion diferida.
+    entry_delay_bars: int = 0
     costs: CostModel = field(default_factory=CostModel)
 
 
@@ -140,8 +144,11 @@ class ShortBacktester:
         for i in range(n):
             # --- 1) Ejecutar la entrada pendiente en la apertura de esta barra ---
             if pending is not None and pos is None:
-                pos = self._open_position(i, opens[i], pending, equity, side_cost)
-                pending = None
+                if pending["espera"] > 0:
+                    pending["espera"] -= 1
+                else:
+                    pos = self._open_position(i, opens[i], pending, equity, side_cost)
+                    pending = None
 
             # --- 2) Gestionar la posicion viva dentro de la barra ---
             if pos is not None:
@@ -175,6 +182,7 @@ class ShortBacktester:
                     "stop_atr": stop_arr[i],
                     "target_atr": target_arr[i],
                     "max_bars": int(maxbars_arr[i]) if maxbars_arr[i] > 0 else 10**9,
+                    "espera": cfg.entry_delay_bars,
                 }
 
         return BacktestResult(

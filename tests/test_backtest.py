@@ -163,3 +163,26 @@ def test_la_volatilidad_realizada_tolera_precios_negativos():
     # Tras salir de la ventana contaminada vuelve a haber valores validos.
     assert rv.iloc[-1] == rv.iloc[-1] or True
     assert rv.notna().any()
+
+
+def test_el_retraso_de_ejecucion_desplaza_la_entrada():
+    """entry_delay_bars simula llegar tarde: feed con retraso, ejecución
+    diferida. Con retraso 1, la entrada pasa de la apertura de t+1 a la de t+2."""
+    df = make_df([
+        [100, 101, 99, 100],    # señal aquí
+        [105, 106, 104, 105],   # apertura sin retraso
+        [110, 111, 109, 110],   # apertura con retraso 1
+        [110, 111, 109, 110],
+        [110, 111, 109, 110],   # margen para que la posición llegue a cerrarse
+        [110, 111, 109, 110],
+    ])
+    # Stop y objetivo lejanos: la salida la fuerza el tiempo, no el precio, así
+    # la prueba aísla el momento de ENTRADA que es lo que se quiere medir.
+    sig = signals_at(df, [0], stop_atr=20, target_atr=20, max_bars=2)
+
+    sin = ShortBacktester(BacktestConfig(costs=CostModel(0, 0, 0))).run(df, sig)
+    con = ShortBacktester(BacktestConfig(
+        costs=CostModel(0, 0, 0), entry_delay_bars=1)).run(df, sig)
+
+    assert sin.trades.iloc[0]["entry_price"] == pytest.approx(105.0)
+    assert con.trades.iloc[0]["entry_price"] == pytest.approx(110.0)
