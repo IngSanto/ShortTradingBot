@@ -184,3 +184,5 @@ cuenta:
 - **Suponer ejecución en valores ilíquidos** — la señal existe; la posibilidad de tomar prestado, no.
 - **Optimizar sobre todo el histórico** y presentar ese resultado como esperado.
 - **Reciclar la muestra ciega** después de haberla mirado. Una vez vista, ya no es ciega.
+- **Trocear la serie para analizar por periodos.** Cada trozo empieza sin historia, así que una EMA(200) no genera señales hasta 200 barras después. En una prueba real, un año con 241 operaciones apareció con **1**, y con esos datos concluimos justo lo contrario de lo cierto. Lo correcto: ejecutar sobre la serie **completa** y etiquetar después cada operación por el periodo o régimen de su fecha de entrada.
+- **Confundir alfa con cobertura.** Un sistema corto que solo gana cuando el mercado cae es un seguro: legítimo, pero se dimensiona y se comunica distinto. `scripts/regime_test.py` separa una cosa de la otra.

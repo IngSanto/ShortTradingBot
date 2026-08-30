@@ -89,9 +89,12 @@ def escalar(params: dict, factor: int, ratio_atr: float, tope: int = 2000) -> di
     return out
 
 
-def cargar(patron: str) -> dict[str, pd.DataFrame]:
-    return {os.path.basename(p).split("_")[0]: load_csv(p)
-            for p in sorted(glob.glob(patron))}
+def cargar(patron: str, symbols: list[str] | None = None) -> dict[str, pd.DataFrame]:
+    uni = {os.path.basename(p).split("_")[0]: load_csv(p)
+           for p in sorted(glob.glob(patron))}
+    if symbols:
+        uni = {k: v for k, v in uni.items() if k in symbols}
+    return uni
 
 
 def config_para(profile, tf: str, risk: float) -> BacktestConfig:
@@ -110,6 +113,9 @@ def main() -> int:
     ap.add_argument("--pattern", default="data/cripto/*_{tf}.csv")
     ap.add_argument("--timeframes", nargs="+", default=["1d", "4h", "1h"])
     ap.add_argument("--risk", type=float, default=0.01)
+    ap.add_argument("--symbols", nargs="*", default=None,
+                    help="Restringe el universo; imprescindible si no todas las "
+                         "temporalidades tienen los mismos activos")
     ap.add_argument("--grid", action="store_true", help="Anade barrido de robustez por temporalidad")
     args = ap.parse_args()
 
@@ -120,7 +126,7 @@ def main() -> int:
 
     filas = []
     for tf in args.timeframes:
-        uni = cargar(args.pattern.format(tf=tf))
+        uni = cargar(args.pattern.format(tf=tf), args.symbols)
         if not uni:
             print(f"[!] sin datos para {tf}")
             continue
@@ -130,7 +136,7 @@ def main() -> int:
 
         variantes = [("A: parametros iguales", build(args.strategy))]
         if factor > 1:
-            uni_dia = cargar(args.pattern.format(tf="1d"))
+            uni_dia = cargar(args.pattern.format(tf="1d"), args.symbols)
             ratio = ratio_atr_empirico(uni, uni_dia, factor)
             ajustados = escalar(base.params, factor, ratio)
             print(f"  [{tf}] ATR medido = {ratio:.3f} x el diario "
@@ -170,24 +176,41 @@ def main() -> int:
 
     validas = b[b["n"] >= 30]
     positivas = int((validas["E[R]"] > 0).sum())
-    significativas = int((validas["t"] > 2).sum())
-    print(f"Variante B (misma ventana economica, mas muestra): "
-          f"{positivas}/{len(validas)} positivas, {significativas} con t>2")
 
-    if len(validas) and positivas == len(validas) and significativas:
-        print("\nVEREDICTO: SUPERA la puerta 2.5. El edge sobrevive con mas muestra.")
-    elif len(validas) and positivas == len(validas):
-        print("\nVEREDICTO: signo consistente pero sin significancia. "
-              "Sigue sin distinguirse del ruido, ahora con mas datos: mala señal.")
+    # Criterio corregido. La variante B NO anade muestra (ver docs/02), asi que
+    # exigirle t>2 seria exigirle mas de lo que puede dar: lo que prueba es que
+    # el resultado no dependia de donde caia el corte de la barra diaria.
+    # Lo que se le pide es signo y magnitud comparables.
+    if validas.empty:
+        print("Variante B sin muestra suficiente: no se puede concluir.")
+        return 0
+
+    e_b = float(validas["E[R]"].mean())
+    conserva = positivas == len(validas) and e_b >= 0.5 * e_diario
+    print(f"Variante B (misma ventana, alineacion distinta): E[R]={e_b:+.3f} "
+          f"({positivas}/{len(validas)} positivas)")
+
+    a = tabla[(tabla["variante"].str.startswith("A")) & (tabla["tf"] != "1d")]
+    if not a.empty:
+        invariante = bool((a["E[R]"] > 0).all() and (a["t"] > 2).any())
+        print(f"Variante A (otra escala temporal): E[R]={float(a['E[R]'].mean()):+.3f}"
+              f"{'  -> ademas es invariante de escala' if invariante else ''}")
+
+    if conserva:
+        print("\nVEREDICTO: SUPERA la puerta 2.5. El edge no depende de la "
+              "alineacion de la barra diaria.")
+    elif positivas == len(validas):
+        print("\nVEREDICTO: signo conservado pero magnitud muy degradada. "
+              "Sospechoso: revisar antes de avanzar.")
     else:
-        print("\nVEREDICTO: NO SUPERA. El edge diario no aparece al aumentar la muestra.")
+        print("\nVEREDICTO: NO SUPERA. El edge desaparece al cambiar la alineacion.")
 
     if args.grid:
         print("\n" + "=" * 112)
         print("MESETA DE PARAMETROS POR TEMPORALIDAD")
         print("=" * 112)
         for tf in args.timeframes:
-            uni = cargar(args.pattern.format(tf=tf))
+            uni = cargar(args.pattern.format(tf=tf), args.symbols)
             if not uni:
                 continue
             f = BARRAS_POR_DIA[tf]

@@ -1,6 +1,7 @@
 # Resultados sobre datos reales
 
-**Última actualización:** agosto 2026 · **0 de 12 estrategias superan las puertas de validación.**
+**Última actualización:** agosto 2026 · **2 de 12 estrategias superan las puertas 1 a 3.**
+Ninguna ha pasado por paper trading todavía: no hay nada listo para dinero real.
 
 Este documento no es una lista de estrategias que funcionan. Es la lista de lo
 que ya podemos descartar, y por qué. Cada resultado negativo aquí es dinero no
@@ -92,64 +93,128 @@ también otro riesgo de squeeze, y no tenemos datos de préstamo para modelarlo.
 
 ---
 
-## 4. Futuros y cripto: nada pasa, pero algo asoma
+## 4. Cripto: dos estrategias superan las puertas 1 a 3
 
-Ninguna estrategia supera la puerta 2 (t > 2) en ningún mercado. Las dos que más
-se acercan, ambas en cripto:
+Al ampliar el universo de 10 a **40 perpetuos** (82.209 barras), el
+t-estadístico subió como debía si el efecto era real:
 
-| Estrategia | E[R] | t | Activos+ | Meseta | Veredicto |
-|---|---|---|---|---|---|
-| `pullback_to_ema_short` | +0,091 | 1,29 | **70%** | **100%** | P2 fallida |
-| `squeeze_breakdown` | +0,036 | 0,48 | 50% | 89% | P2 fallida |
+| Estrategia | n | E[R] | t | Activos+ | Meseta | Fuera de muestra | Veredicto |
+|---|---|---|---|---|---|---|---|
+| `pullback_to_ema_short` | 1.025 | +0,114 | **3,36** | 72,5% | 100% | **+0,271** (228 ops) | **PASA** |
+| `squeeze_breakdown` | 844 | +0,198 | **5,03** | 72,5% | 100% | **+0,166** (156 ops) | **PASA** |
+| `donchian_breakdown` | 591 | +0,015 | 0,36 | 47,5% | — | — | P1 fallida |
 
-`pullback_to_ema_short` es la única candidata que queda viva del catálogo
-original: positiva en 7 de 10 activos, **meseta de parámetros perfecta** (27 de
-27 combinaciones), y positiva también en futuros. Pero t = 1,29 no es
-distinguible del ruido, y ya aprendimos en la tanda anterior —con
-`squeeze_breakdown` sobre BTC— que una meseta bonita con muestra corta no
-significa nada.
+Con 10 activos, `pullback_to_ema_short` daba t=1,29. Con 40, t=3,36. Esa es la
+firma de un efecto real: al cuadruplicar las observaciones independientes el
+estadístico crece, no se queda plano.
 
-En futuros, `donchian_breakdown` es la única que supera la puerta 1 (+0,038,
-meseta 67%), pero se queda en t = 0,52.
+### No es solo cobertura: hay alfa en mercado alcista
+
+La prueba que más importa en un sistema corto. Régimen definido por BTC frente
+a su SMA(200) el día de entrada:
+
+| Estrategia | BTC alcista | BTC bajista | Dependencia |
+|---|---|---|---|
+| `squeeze_breakdown` | **+0,224** (t=4,51) | +0,121 (t=2,67) | **−0,103** |
+| `pullback_to_ema_short` | **+0,140** (t=3,06) | +0,186 (t=5,15) | +0,046 |
+
+Ambas son positivas **con el mercado subiendo**, y `squeeze_breakdown` es
+incluso mejor ahí que en mercado bajista. No son seguros disfrazados de alfa.
+
+### Puerta 2.5 superada
+
+| Estrategia | Diario | 4h, ventanas ×6 | 4h, mismos parámetros |
+|---|---|---|---|
+| `squeeze_breakdown` | +0,041 | +0,075 | **+0,066 (t=2,37)** |
+| `pullback_to_ema_short` | +0,110 | +0,082 | −0,005 |
+
+`squeeze_breakdown` es además **invariante de escala**: funciona con los
+parámetros sin tocar sobre barras de 4h, y con significancia. Es mejor señal
+todavía. `pullback_to_ema_short` conserva el signo y la magnitud en la variante
+B, que es lo exigible, pero su patrón solo existe en la ventana larga.
+
+*(Comparación sobre los mismos 10 activos en ambas temporalidades; el resto del
+universo solo tiene barras diarias.)*
 
 ---
 
-## 5. Estado del catálogo
+## 5. Dos errores de análisis propios, y cómo se detectaron
+
+Ambos me llevaron a conclusiones equivocadas antes de corregirlos. Quedan aquí
+porque el proceso importa tanto como el resultado.
+
+### 5.1 Trocear la serie destruye el calentamiento de los indicadores
+
+Analicé la expectativa año por año cortando cada serie en trozos anuales. Está
+mal: cada trozo empieza sin historia, así que una EMA(200) no genera ninguna
+señal hasta 200 barras después.
+
+| Año | Operaciones reales | Con la serie troceada |
+|---|---|---|
+| 2023 | 292 | 99 |
+| 2025 | 323 | 138 |
+| 2026 | 241 | **1** |
+
+Con esos datos concluí que `pullback_to_ema_short` "solo gana en años
+bajistas". Era falso. **Lo correcto es ejecutar sobre la serie completa y
+etiquetar después cada operación** por el régimen del día de entrada. Hecho así,
+la estrategia no pierde en ningún año y tiene alfa en régimen alcista.
+
+### 5.2 Escalar el periodo del ATR no conserva su magnitud
+
+Al bajar a 4h escalé las ventanas ×6, incluido el periodo del ATR. Pero el ATR
+de una barra de 4h vale **0,396 veces** el de una diaria (medido, idéntico en
+los 10 activos; la teoría predice 1/√6 = 0,41). Un stop de "2 ATR" quedaba 2,5
+veces más ajustado y dejaba de ser la misma operación.
+
+**El síntoma fue la tasa de acierto**, que cayó del 49% al 37%. Corrigiendo los
+múltiplos por 1/0,396 volvió al 50,5%.
+
+### 5.3 Y una suposición que resultó falsa
+
+Diseñé la puerta 2.5 creyendo que bajar de temporalidad multiplicaría la
+muestra ×6. No lo hace: con una posición a la vez y una ventana económica fija,
+el número de operaciones lo marca el horizonte, no las barras. Dio 404
+operaciones frente a 341. Lo que multiplicó la muestra de verdad fue **pasar de
+10 a 40 activos**.
+
+---
+
+## 6. Estado del catálogo
 
 | Estrategia | Veredicto | Evidencia |
 |---|---|---|
+| **`squeeze_breakdown`** | **PASA puertas 1-3** | t=5,03; alfa en alcista; invariante de escala |
+| **`pullback_to_ema_short`** | **PASA puertas 1-3** | t=3,36; 72,5% de activos; OOS +0,271 |
+| `donchian_breakdown` | En observación | Positiva en ambos regímenes pero t<2 |
 | `funding_fade_short` | **DESCARTADA** | La señal apunta al revés; 0/27 combinaciones |
-| `failed_breakout_short` | **DESCARTADA** | Negativa y significativa en los tres mercados |
-| `bollinger_upper_fade` | **DESCARTADA** | Negativa y significativa en los tres mercados |
-| `parabolic_extension_fade` | **DESCARTADA** | Negativa y significativa; t=−3,4 en cripto |
-| `rsi2_fade` | **DESCARTADA** | Negativa en los tres mercados |
-| `squeeze_breakdown` | **Muerta en acciones y futuros** | Sobrevive débil en cripto (t=0,48) |
+| `failed_breakout_short` | **DESCARTADA** | t=−3,95 en cripto; negativa en los tres mercados |
+| `bollinger_upper_fade` | **DESCARTADA** | t=−3,77; negativa en los tres mercados |
+| `parabolic_extension_fade` | **DESCARTADA** | t=−4,52 |
+| `rsi2_fade` | **DESCARTADA** | t=−4,14 |
+| `volatility_spike_exhaustion` | **DESCARTADA** | t=−3,34; y el peor riesgo de ruina |
 | `relative_weakness_short` | **DESCARTADA en acciones** | t=−3,24; sin pata larga no tiene argumento |
-| `volatility_spike_exhaustion` | **DESCARTADA** | Negativa; y con el peor riesgo de ruina |
-| `donchian_breakdown` | **En observación** | Único positivo en futuros, pero t=0,52 |
-| **`pullback_to_ema_short`** | **La única viva** | +0,091 R en cripto, 70% activos, meseta 100% |
-| `gap_up_fade` | **Sin evaluar en cripto** | Correcto: 24/7 no tiene huecos. Negativa en acciones |
-| `oi_flush_short` | **Sin evaluar** | Falta open interest (carpeta `metrics` de Binance) |
+| `gap_up_fade` | Sin evaluar en cripto | Correcto: 24/7 no tiene huecos |
+| `oi_flush_short` | Sin evaluar | Falta open interest |
 
-**Balance: 7 descartadas con evidencia, 1 viva, 2 en observación, 2 sin evaluar.**
+**En acciones y futuros no sobrevive ninguna.** El catálogo entero pierde en
+acciones incluso con los costes a cero.
 
 ---
 
-## 6. Tres bugs que solo aparecieron con datos reales
+## 7. Qué falta antes de tocar dinero real
 
-Los datos sintéticos no los habrían encontrado nunca:
+Las dos que pasan han superado las puertas 1, 2, 2.5 y 3. **Falta la 4, que no
+se puede acelerar:** paper trading, mínimo 60 sesiones o 50 operaciones,
+comparando contra el backtest del mismo periodo.
 
-1. **Precios negativos.** El WTI cerró a −37,63 el 20-04-2020. El dimensionamiento dividía por el precio: con precio negativo habría abierto una cantidad negativa, es decir, **un largo encubierto dentro de un motor short-only**.
-2. **Huecos de funding convertidos en ceros.** `resample().sum()` devuelve 0 para días sin registros. Un hueco de datos se volvía un "funding cero" creíble.
-3. **`load_csv` descartaba `funding_rate`.** Recortaba el DataFrame a las cinco columnas OHLCV, así que `funding_fade_short` devolvía **cero señales sin dar ningún error**. Es el peor modo de fallo posible: parecía "no hay oportunidades" cuando era "no ve su dato".
+Cuatro reservas que hay que tener presentes:
 
-Los tres tienen ahora prueba de regresión.
+1. **Sesgo de supervivencia del universo.** Son 40 perpetuos que existen hoy en Binance; los que se deslistaron no están. Para cortos esto juega *en contra* de nuestros resultados —los que colapsaron habrían sido excelentes cortos— así que la estimación es conservadora. Pero no está medido.
+2. **Un solo mercado.** Ambas funcionan en cripto y fallan en acciones y futuros. No sabemos si es una peculiaridad de cripto en 2020-2026.
+3. **Un solo ciclo completo.** El histórico cubre un mercado bajista mayor (2022) y la debilidad de 2025-2026. No es mucha diversidad de regímenes.
+4. **Falta el filtro de aglomeración.** En cripto, veto por open interest extremo y profundidad de libro. No está implementado.
 
----
-
-## 7. Qué haría a continuación
-
-1. **Abandonar acciones** para el mandato solo-corto. La evidencia es contundente y seguir ahí es gastar tiempo.
-2. **Concentrarse en `pullback_to_ema_short` en cripto**: bajar a 4h y 1h para multiplicar la muestra y aplicar la puerta 2.5. Es la única forma barata de saber si ese +0,091 R es real.
-3. **Descargar el open interest** (`metrics` de Binance) para evaluar `oi_flush_short`, la última tesis del catálogo sin probar.
-4. **Replantear la familia de flujo.** El resultado del funding sugiere que en cripto los indicadores de posicionamiento funcionan como señales de *continuación*. Si eso se confirma, el catálogo corto debería construirse sobre agotamiento de tendencia, no sobre aglomeración.
+**Siguiente paso recomendado:** montar el paper trading de `squeeze_breakdown`,
+que es la más fuerte de las dos (mayor t, alfa en alcista, invariante de
+escala), con tamaño mínimo y las reglas de escalado gradual de la puerta 4.

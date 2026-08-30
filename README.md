@@ -14,7 +14,7 @@ filtros, no por una corazonada.
 |---|---|
 | [`docs/01-estrategias-candidatas.md`](docs/01-estrategias-candidatas.md) | **Empieza aquí.** Catálogo de 17 estrategias en corto: tesis, reglas exactas, cómo falla cada una y en qué orden probarlas. Incluye cuánto pesa elegir mercado. |
 | [`docs/02-metodologia-validacion.md`](docs/02-metodologia-validacion.md) | Las puertas de validación, el escalado a real y la gestión de riesgo específica del corto. |
-| [`docs/03-resultados-datos-reales.md`](docs/03-resultados-datos-reales.md) | **Resultados sobre datos reales.** Qué se ha descartado ya y por qué. Se actualiza con cada tanda. |
+| [`docs/03-resultados-datos-reales.md`](docs/03-resultados-datos-reales.md) | **Resultados sobre datos reales.** Qué sobrevive, qué se ha descartado y por qué. Se actualiza con cada tanda. |
 
 ## Puesta en marcha
 
@@ -60,6 +60,9 @@ scripts/
   fetch_data.py          Descarga histórica de los tres mercados (Yahoo/ccxt)
   fetch_github_data.py   Descarga desde repos públicos de GitHub (red restringida)
   screen_strategies.py   Criba comparativa del catálogo completo
+  validate.py            Puertas 1, 2, 2.5 y 3 con veredicto por estrategia
+  timeframe_test.py      Puerta 2.5: la misma estrategia en varias temporalidades
+  regime_test.py         ¿Alfa o solo cobertura? Separa alcista de bajista
   compare_markets.py     Aísla el efecto del mercado sobre la misma estrategia
 tests/              Pruebas de que el motor no se engaña a sí mismo
 ```
@@ -99,8 +102,8 @@ cripto o futuros; en acciones el préstamo se come el resultado.
 - [x] Primera criba sobre datos reales: **3 estrategias descartadas, 0 promovidas**
 - [ ] **Universo real de los tres mercados** — bloqueado: la política de red de este entorno deniega Yahoo, Binance, Bybit, Kraken, Stooq, CoinGecko, Polygon y Alpha Vantage. Solo `raw.githubusercontent.com` es accesible. Requiere una máquina con salida a internet.
 - [ ] Histórico de funding y open interest — sin ellos, las dos estrategias con mejor tesis siguen sin evaluar
-- [ ] Validación walk-forward sobre histórico real
-- [ ] Paper trading
+- [x] Validación sobre histórico real: **2 de 12 estrategias superan las puertas 1 a 3**
+- [ ] Paper trading (puerta 4) — nada listo para dinero real hasta completarlo
 - [ ] Operativa real con escalado gradual
 
 > Nada de este repo es asesoramiento financiero. Operar en corto puede generar
