@@ -17,6 +17,7 @@ filtros, no por una corazonada.
 | [`docs/03-resultados-datos-reales.md`](docs/03-resultados-datos-reales.md) | **Resultados sobre datos reales.** Qué sobrevive, qué se ha descartado y por qué. Se actualiza con cada tanda. |
 | [`docs/04-teoria-propia.md`](docs/04-teoria-propia.md) | Teoría propia CBRC: hipótesis, predicciones declaradas y su falsación. |
 | [`config/catalogo.json`](config/catalogo.json) | **El catálogo.** Estrategias aprobadas para paper, en observación y descartadas con su motivo. |
+| [`docs/05-alta-frecuencia.md`](docs/05-alta-frecuencia.md) | ¿Compensa operar con mucha frecuencia y ganancias pequeñas? Medido en 1d/4h/1h: no, en este sistema. |
 
 ## Puesta en marcha
 
