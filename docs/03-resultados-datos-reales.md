@@ -63,6 +63,13 @@ hacer, y es el fondo real sobre el que habríamos operado.
 
 ## 3. Acciones: mercado inviable para un bot solo-corto
 
+> **Decisión confirmada (2026-08-30):** se cierra el mandato a cripto. Acciones
+> queda descartado con evidencia; futuros descartado pero no vetado de raíz
+> (ver `config/catalogo.json` → `decisiones_confirmadas`). Lo que sigue es la
+> evidencia que llevó a esa decisión.
+
+
+
 **Las diez estrategias de precio pierden, y pierden con los costes puestos a cero.**
 
 | Estrategia | E[R] | t | Activos en positivo |

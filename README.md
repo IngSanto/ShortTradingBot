@@ -90,13 +90,9 @@ tabla valida **el código**, no el *edge*.
 
 ## Decisiones tomadas
 
-- **Solo corto**, sin cobertura larga. Descarta el pairs trading; sube el peso de las estrategias de horizonte corto y de las que leen flujo directamente.
-- **Validar en los tres mercados** (acciones, cripto perpetuos, futuros) con los costes propios de cada uno, y decidir con datos.
-
-Una medida ya disponible: la ventaja de cripto sobre acciones para un corto es
-**proporcional al tiempo en mercado** (~3,9 bps/día de diferencia de carry). Las
-estrategias de tendencia, que aguantan 20-40 sesiones, solo tienen sentido en
-cripto o futuros; en acciones el préstamo se come el resultado.
+- **Solo corto**, sin cobertura larga ni excepciones. Descarta el pairs trading; sube el peso de las estrategias de horizonte corto y de las que leen flujo directamente.
+- **Mercado: solo cripto (perpetuos).** Se evaluaron los tres mercados con el mismo catálogo y los mismos costes propios de cada uno. Acciones queda **descartado con evidencia** (las 10 estrategias pierden incluso con costes a cero: deriva alcista estructural, t hasta −5,9). Futuros queda descartado por ahora, pero no vetado de raíz (mejor caso t=0,52, no perdía sin costes). Cripto es el único con estrategias que superan las 4 puertas de validación. Detalle en `docs/03` y la decisión formal en `config/catalogo.json`.
+- **Exposición corta agregada: sin tope todavía**, aceptado como riesgo mientras el paper trading corre con una sola estrategia y tamaño de 0,1%. Disparadores para añadir el límite: segunda estrategia en paralelo, subida de tramo hacia real, o señales de apertura simultánea frecuente en el paper. Registrado en `config/catalogo.json`.
 
 ## Estado
 
