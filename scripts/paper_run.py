@@ -85,6 +85,9 @@ def main() -> int:
     ap.add_argument("--equity", type=float, default=100_000.0)
     ap.add_argument("--riesgo", type=float, default=0.001,
                     help="Fraccion arriesgada por operacion (tramo 1 del escalado: 0,1%%)")
+    ap.add_argument("--max-antiguedad", type=int, default=7,
+                    help="Excluir activos cuya ultima barra sea mas antigua "
+                         "que esto en dias (deslistados, feeds rotos)")
     ap.add_argument("--retraso", type=int, default=1,
                     help="Barras de retraso entre senal y ejecucion (el archivo llega con 1 dia)")
     args = ap.parse_args()
@@ -118,10 +121,25 @@ def main() -> int:
     print(f"Riesgo por operacion: {args.riesgo:.2%}   Retraso: {args.retraso} barra(s)\n")
 
     ficheros = sorted(glob.glob(os.path.join(RAIZ, "data", "cripto", "*_1d.csv")))
+
+    # Un activo cuyo historico deja de actualizarse suele estar deslistado.
+    # Operar sobre datos rancios generaria senales sobre precios que ya no
+    # existen, asi que se excluye en vez de arrastrarlo en silencio.
+    limite = pd.Timestamp.now("UTC").tz_localize(None) - pd.Timedelta(days=args.max_antiguedad)
+    vivos, rancios = [], []
+    for path in ficheros:
+        ultima = pd.read_csv(path, parse_dates=["date"])["date"].max()
+        (vivos if ultima >= limite else rancios).append((path, ultima))
+    if rancios:
+        print(f"[!] Excluidos por datos rancios (>{args.max_antiguedad} dias):")
+        for path, ultima in rancios:
+            print(f"    {os.path.basename(path).split('_')[0]:10s} ultima barra {ultima.date()}")
+        print()
+
     log_total = []
     for entrada in aprobadas:
         est = build(entrada["id"], **entrada.get("parametros", {}))
-        for path in ficheros:
+        for path, _ in vivos:
             simbolo = os.path.basename(path).split("_")[0]
             log = broker.procesar(estado, est, simbolo, load_csv(path))
             log_total += log
