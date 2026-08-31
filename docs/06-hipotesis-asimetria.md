@@ -1,7 +1,7 @@
 # Hipótesis de asimetría: selección de activos por velocidad de caída
 
-**Estado: pre-registrada.** Este documento se escribe **antes** de calcular ninguna
-correlación con el resultado de las estrategias. La sección 4 se rellena después.
+**Estado: FALSADA — en la dirección opuesta a la predicha.** Las secciones 1 a 3
+se escribieron antes de calcular ninguna correlación. La sección 4, después.
 
 Origen: al desmontar la teoría propia CBRC (`docs/04-teoria-propia.md`), encontramos
 que la ventaja de `squeeze_breakdown` no depende de la estructura de tendencia, solo
@@ -65,4 +65,53 @@ relación con la asimetría.
 
 ## 4. Resultados
 
-*(pendiente de ejecución)*
+Ejecutado sobre los **24 activos de diseño**. La reserva de 16 no se ha tocado —
+el criterio de falsación fijado en la sección 3 dice explícitamente que si no
+confirma, no se gasta.
+
+### 4.1 El signo es el contrario en las cuatro comparaciones
+
+| Métrica → estrategia | ρ (Spearman) | t | Signo predicho | ¿Se cumple? |
+|---|---|---|---|---|
+| Sesgo → `squeeze_breakdown` | +0,337 | +1,68 | negativo | **No** |
+| Ratio semivol → `squeeze_breakdown` | −0,278 | −1,36 | positivo | **No** |
+| Sesgo → `pullback_to_ema_short` | +0,397 | **+2,03** | negativo | **No** |
+| Ratio semivol → `pullback_to_ema_short` | −0,423 | **−2,19** | positivo | **No** |
+
+No es un resultado ambiguo: las cuatro correlaciones tienen el signo contrario al
+predicho, y dos de las cuatro superan además el umbral de significancia fijado
+(\|t\|>1,5), en la dirección opuesta. Según el criterio de la sección 3
+("falsada si el signo no es el predicho en ninguna de las dos"), la hipótesis
+queda **falsada con claridad**, no en zona de "no concluyente".
+
+### 4.2 Un dato de contexto que ya avisaba
+
+La distribución de sesgo del propio universo de diseño tiene **media positiva**
+(+0,275), no negativa. El "efecto apalancamiento" clásico —las caídas pesan más
+que las subidas— es un hecho bien documentado en acciones, pero **no se replica
+en este universo de cripto**: aquí las subidas extremas (pumps parabólicos de
+activos de baja capitalización) pesan más que las caídas. Construir la hipótesis
+sobre una intuición importada de otro mercado, sin comprobar primero si la
+premisa de base se sostenía en cripto, fue el error de partida.
+
+### 4.3 Lo que sí queda, sin perseguirlo ahora
+
+Los activos con **sesgo más positivo** —los más propensos a subidas parabólicas
+violentas, tipo meme-coin— resultan mejores candidatos para el corto, no peores.
+Es una historia coherente y distinta: no es "las caídas son rápidas", es "las
+subidas eufóricas se revierten con fuerza", que es literalmente lo que
+`squeeze_breakdown` (compresión de volatilidad + ruptura a la baja) está
+diseñado para capturar.
+
+**Esto NO se convierte aquí en una hipótesis nueva.** Hacerlo ahora —tras ver
+esta correlación— sería exactamente el error que este protocolo existe para
+evitar: elegir la métrica después de mirar qué correlaciona. Si se quiere
+perseguir, necesita su propia pre-registración, con su propio criterio de
+falsación, en un documento nuevo.
+
+### 4.4 Presupuesto de iteraciones
+
+Con esta van **3** iteraciones sobre el conjunto de diseño (CBRC completa, el
+gradiente de compresión de CBRC, y esta). Sigue holgado dentro del límite de
+5-10 declarado en la metodología.
+
