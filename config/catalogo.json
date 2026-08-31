@@ -1,0 +1,164 @@
+{
+  "version": 2,
+  "actualizado": "2026-08-30",
+  "criterio_admision": {
+    "puertas": "1, 2, 2.5 y 3 de docs/02-metodologia-validacion.md",
+    "t_minimo": 2.87,
+    "nota_t": "Bonferroni para las K=12 estrategias probadas (alfa=0,05). Sin corregir sería 1,96; usar el umbral corregido evita premiar al ganador de una búsqueda amplia.",
+    "meseta_minima": 0.6,
+    "activos_positivos_minimo": 0.5,
+    "alfa_en_alcista": "obligatoria: si solo gana en régimen bajista es un seguro y se dimensiona distinto"
+  },
+  "aprobadas_para_paper": [
+    {
+      "id": "pullback_to_ema_short",
+      "orden_paper": 1,
+      "mercado": "cripto",
+      "parametros": {},
+      "justificacion_orden": "La más robusta al retraso de ejecución (-25% con 1 día frente a -38% de squeeze). Con un feed que llega tarde es la única realmente operable.",
+      "evidencia": {
+        "n": 1471,
+        "expectancy_r": 0.166,
+        "t": 5.85,
+        "activos_positivos": 0.725,
+        "meseta": 1.0,
+        "alfa_alcista": {
+          "expectancy_r": 0.14,
+          "t": 3.06
+        },
+        "alfa_bajista": {
+          "expectancy_r": 0.186,
+          "t": 5.15
+        },
+        "fuera_de_muestra": {
+          "expectancy_r": 0.271,
+          "n": 228
+        },
+        "retraso_1_barra": {
+          "expectancy_r": 0.124,
+          "t": 4.4
+        },
+        "retraso_2_barras": {
+          "expectancy_r": 0.119,
+          "t": 4.2
+        }
+      }
+    },
+    {
+      "id": "squeeze_breakdown",
+      "orden_paper": 2,
+      "mercado": "cripto",
+      "parametros": {},
+      "justificacion_orden": "Mayor expectativa y única invariante de escala, pero pierde el 38% de la ventaja con un solo día de retraso. Entra en paper cuando haya feed en tiempo real.",
+      "evidencia": {
+        "n": 1125,
+        "expectancy_r": 0.172,
+        "t": 5.12,
+        "activos_positivos": 0.725,
+        "meseta": 1.0,
+        "alfa_alcista": {
+          "expectancy_r": 0.224,
+          "t": 4.51
+        },
+        "alfa_bajista": {
+          "expectancy_r": 0.121,
+          "t": 2.67
+        },
+        "fuera_de_muestra": {
+          "expectancy_r": 0.166,
+          "n": 156
+        },
+        "retraso_1_barra": {
+          "expectancy_r": 0.107,
+          "t": 3.3
+        },
+        "retraso_2_barras": {
+          "expectancy_r": 0.081,
+          "t": 2.5
+        }
+      }
+    }
+  ],
+  "en_observacion": [
+    {
+      "id": "donchian_breakdown",
+      "t": 2.37,
+      "motivo": "Positiva en ambos regímenes pero no supera el umbral corregido de 2,87. Se reevalúa cuando haya más historia."
+    }
+  ],
+  "descartadas": [
+    {
+      "id": "funding_fade_short",
+      "t": -6.82,
+      "motivo": "La señal predice continuación alcista, no agotamiento"
+    },
+    {
+      "id": "bollinger_upper_fade",
+      "t": -4.54,
+      "motivo": "Vende fuerza"
+    },
+    {
+      "id": "parabolic_extension_fade",
+      "t": -3.17,
+      "motivo": "Vende fuerza"
+    },
+    {
+      "id": "volatility_spike_exhaustion",
+      "t": -2.92,
+      "motivo": "Vende fuerza; además el peor riesgo de ruina"
+    },
+    {
+      "id": "failed_breakout_short",
+      "t": -2.96,
+      "motivo": "Vende fuerza"
+    },
+    {
+      "id": "rsi2_fade",
+      "t": -2.7,
+      "motivo": "Vende fuerza"
+    },
+    {
+      "id": "cbrc_short",
+      "t": 2.24,
+      "motivo": "Teoría propia: no bate a squeeze_breakdown, sus dos aportaciones son inocuas"
+    },
+    {
+      "id": "relative_weakness_short",
+      "motivo": "Solo probada en acciones, donde el mercado entero fue descartado (ver decisiones_confirmadas.mercado_unico_cripto). Sin pata larga no tiene argumento."
+    }
+  ],
+  "reglas_de_riesgo": {
+    "riesgo_por_operacion": 0.01,
+    "escalado_paper_a_real": [
+      0.001,
+      0.0025,
+      0.005,
+      0.01
+    ],
+    "veto_drawdown": "bajar un tramo si el drawdown supera 1,5x el máximo simulado",
+    "duracion_minima_paper": "60 sesiones o 50 operaciones, lo que sea más largo"
+  },
+  "decisiones_confirmadas": {
+    "solo_corto": {
+      "fecha": "2026-08-30 (reafirmado; decidido originalmente antes)",
+      "decision": "100% corto, sin cobertura larga, sin excepciones.",
+      "consecuencia": "Descarta cualquier estrategia neutral al mercado (pairs trading, largo/corto). relative_weakness_short pierde su argumento principal sin la pata larga."
+    },
+    "mercado_unico_cripto": {
+      "fecha": "2026-08-30",
+      "decision": "Se cierra el mandato a cripto (perpetuos). Acciones y futuros quedan fuera del catálogo activo.",
+      "motivo": "Es el único de los tres mercados evaluados (acciones, cripto, futuros) donde alguna estrategia superó las 4 puertas de validación. Acciones pierde con costes a cero (t hasta -5,9: deriva alcista estructural). Futuros no alcanzó significancia (mejor caso t=0,52).",
+      "estado_acciones": "DESCARTADO CON EVIDENCIA. No se retoma salvo con universo distinto (small caps) o si se levanta el mandato solo-corto.",
+      "estado_futuros": "DESCARTADO CON EVIDENCIA, pero más cerca que acciones (no perdía con costes a cero). Podría reabrirse con más historia o mejores estrategias, no está vetado de raíz.",
+      "referencia": "docs/03-resultados-datos-reales.md, secciones 3 y 4"
+    },
+    "exposicion_agregada_sin_tope": {
+      "fecha": "2026-08-30",
+      "decision": "NO se implementa por ahora un tope a la exposición corta agregada (nº de posiciones simultáneas o % de capital en corto a la vez).",
+      "riesgo_aceptado": "pullback_to_ema_short corre sobre 39 activos correlacionados. En un movimiento fuerte del mercado, muchas de esas posiciones se abren juntas: el riesgo real de cola es mayor que el que sugiere mirar cada operación por separado ('diez cortos en tecnología son una posición, no diez', docs/02).",
+      "por_que_se_acepta_ahora": "Con una sola estrategia activa en paper y tamaño de 0,1% por operación (tramo 1), el riesgo de cola está acotado incluso sin el tope.",
+      "disparador_para_revisar": "Antes de: (a) añadir squeeze_breakdown en paralelo, (b) subir de tramo hacia dinero real, o (c) si el paper muestra varias posiciones abriéndose el mismo día con frecuencia.",
+      "referencia": "docs/02-metodologia-validacion.md, regla de gestión de riesgo nº4"
+    }
+  }
+}
