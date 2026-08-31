@@ -171,6 +171,15 @@
       "hallazgo_adicional": "Encontrado y corregido un hueco real en la actualizacion diaria: el archivo estatico de Binance no publica fundingRate diario (solo mensual), asi que el dato quedaba congelado ~30 dias. Confirmado ademas que la API en vivo de Binance esta bloqueada tanto en desarrollo como en el runner real de GitHub Actions: no hay via disponible para mantener el funding fresco en este sistema, lo que habria hecho el filtro inoperable en vivo aunque el mecanismo hubiera funcionado.",
       "lead_no_perseguido": "Los peores trades vienen de eventos que sacuden a varios activos el mismo dia, no de que un activo concreto ya estuviera masificado. Un filtro de aglomeracion AGREGADO de mercado (no por activo) podria ser mas prometedor, pero no se probo aqui - necesitaria su propia pre-registracion.",
       "referencia": "docs/07-filtro-aglomeracion.md"
+    },
+    {
+      "id": "filtro_aglomeracion_funding_agregado",
+      "fecha": "2026-08-31",
+      "estado": "NO_ADOPTADO",
+      "mecanismo": "Veto universal (todos los activos, misma fecha) cuando la fraccion del universo con el corto masificado ese dia supera un umbral de amplitud.",
+      "resultado": "El mecanismo SI reduce el riesgo de cola correlacionado (dias con >=2 stops simultaneos bajan de 110 a 87-102 en las 10 combinaciones de la rejilla), pero squeeze_breakdown pierde 20%-55% de expectativa en TODA la rejilla -no cumple el criterio en ninguna combinacion. Verificado el mecanismo directamente: los trades vetados de squeeze_breakdown rinden 4x mejor (E[R] +0,244) que los conservados (+0,059). La misma volatilidad de mercado que dispara la amplitud es la fuente del edge de esa estrategia -el veto no separa riesgo de ventaja para ella. pullback_to_ema_short si cumple ampliamente en solitario, pero el criterio exige ambas estrategias a la vez.",
+      "lead_no_perseguido": "Ninguno: el mecanismo mismo explica por que un veto agregado universal no puede servir a una estrategia que depende de la volatilidad que el filtro trata de evitar. Aplicarlo solo a pullback_to_ema_short seria otra hipotesis, no una calibracion de parametros.",
+      "referencia": "docs/08-filtro-agregado.md"
     }
   ]
 }

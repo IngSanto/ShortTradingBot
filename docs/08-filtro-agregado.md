@@ -1,8 +1,10 @@
 # Filtro de aglomeración agregado (D4-bis): veto por amplitud de mercado
 
-**Estado: EN CALIBRACIÓN.** Las secciones 1 a 3 se escriben ahora, antes de
-calcular ningún resultado, siguiendo la misma disciplina que `docs/07`. La
-sección 4 se completa después, con lo que salga.
+**Estado: NO ADOPTADO.** No cumple el criterio de éxito pre-registrado —
+`squeeze_breakdown` pierde entre 20% y 55% de su expectativa en las 10
+combinaciones de la rejilla, con mecanismo identificado y verificado
+(sección 4.2). Las secciones 1 a 3 se escribieron antes de calibrar nada;
+la sección 4, después.
 
 ---
 
@@ -95,4 +97,83 @@ consecuencia de `docs/07` y sigue aplicando aquí sin cambios.
 
 ## 4. Resultados
 
-_Pendiente._
+### 4.1 La rejilla, en la región más ancha (percentil individual 10%)
+
+| Umbral τ | `squeeze_breakdown` retención / caída E[R] | `pullback_to_ema_short` retención / caída E[R] | Días de stop simultáneo (base 110) |
+|---|---|---|---|
+| 15% | 65,1% / **+19,5%** | 89,5% / -13,5% | 87 (-23) |
+| 20% | 76,2% / **+52,3%** | 96,0% / -7,5% | 94 (-16) |
+| 25% | 79,1% / **+54,8%** | 97,0% / -5,6% | 97 (-13) |
+| 30% | 84,6% / **+46,2%** | 98,9% / -1,5% | 101 (-9) |
+| 40% | 87,9% / **+26,3%** | 99,0% / -1,0% | 102 (-8) |
+
+(caída E[R] en negrita = por encima del 15% permitido; el signo positivo
+significa que el E[R] se hunde, no que mejora — es `(base-filtrado)/|base|`)
+
+Al percentil individual 20% el resultado es estrictamente peor en ambas
+estrategias (más días vetados por el mismo umbral, sin ninguna ganancia a
+cambio) — no aporta una región nueva, así que no se repite aquí.
+
+**Lo que sí funciona, de forma consistente en las 10 combinaciones:** los
+días con ≥2 stops simultáneos bajan de 110 a un rango de 87-102 — el
+mecanismo reduce el riesgo de cola *correlacionado*, tal como se diseñó
+(sección 1). Pero eso no basta: el criterio pide las tres condiciones a la
+vez, y **`squeeze_breakdown` no cumple la condición de expectativa en
+ninguna de las 10 celdas** — su E[R] cae entre 20% y 55%, muy por encima
+del 15% permitido, en toda la rejilla.
+
+### 4.2 Por qué: el filtro le quita a `squeeze_breakdown` exactamente sus
+mejores operaciones
+
+Se comprobó directamente si los trades vetados eran mejores o peores que
+los que quedaron (percentil 10%, umbral 25%, `squeeze_breakdown`):
+
+| | n | E[R] |
+|---|---|---|
+| Trades vetados | 291 | **+0,244 R** |
+| Trades conservados | 385 | +0,059 R |
+
+Los trades que el filtro bloquea rinden **cuatro veces mejor** que los que
+deja pasar. No es ruido: tiene sentido de mecanismo. `squeeze_breakdown`
+entra precisamente cuando un activo rompe de una compresión de
+volatilidad — y esas rupturas tienden a ocurrir en los mismos días en que
+el mercado entero se mueve con fuerza, que es justo cuando la amplitud de
+funding extremo sube (muchos activos con el corto masificado a la vez).
+El filtro y la ventaja de la estrategia están mirando la **misma
+volatilidad de mercado** desde dos ángulos distintos: uno la lee como
+riesgo a evitar, la otra como la oportunidad que persigue. Vetar por
+amplitud alta no separa el riesgo de la ventaja para esta estrategia — las
+elimina juntas.
+
+`pullback_to_ema_short` no tiene este problema (su edge no depende de
+rupturas violentas), por eso pasa el criterio ampliamente en la misma
+rejilla — pero el criterio, fijado en la sección 3, exige que **ambas**
+estrategias lo cumplan.
+
+### 4.3 Balance
+
+**Según el criterio pre-registrado, el filtro NO se adopta.** No por falta
+de evidencia — al contrario, el resultado es limpio y consistente en las
+10 combinaciones de la rejilla, con un mecanismo identificado y verificado
+directamente (4.2), no solo inferido. Es un "no" bien fundamentado, no un
+resultado ambiguo.
+
+Lo que se confirma:
+- El mecanismo de amplitud **sí** reduce el riesgo de cola correlacionado
+  (menos días de stops simultáneos) de forma consistente en toda la
+  rejilla — la hipótesis de `docs/07` sección 4.3 sobre eventos de mercado
+  entero era correcta en ese sentido.
+- Pero el mismo movimiento de mercado que produce esos stops
+  correlacionados es, para `squeeze_breakdown`, la fuente de su mejor
+  operaciones — vetar por amplitud agregada no distingue entre ambos.
+- El peor trade individual (no el agregado por día) no mejora en ninguna
+  combinación — el filtro atenúa la frecuencia de sacudidas correlacionadas,
+  no la magnitud del peor caso aislado.
+
+No queda una pista nueva que perseguir aquí: el propio mecanismo revela por
+qué un veto de amplitud de mercado, aplicado de forma universal a todas las
+estrategias, no puede servir a la vez a una que depende de esa volatilidad
+y a una que no. Filtrarlo solo para `squeeze_breakdown` no sería calibrar
+parámetros de un mecanismo fijo, sería otra hipótesis —y, dado que a esa
+estrategia el filtro le quita justo lo que la hace rentable, no hay razón
+para pensar que valdría la pena pre-registrarla.
