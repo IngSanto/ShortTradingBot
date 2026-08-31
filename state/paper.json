@@ -66,5 +66,13 @@
       "max_bars": 20,
       "espera": 1
     }
+  ],
+  "historial": [
+    {
+      "fecha": "2026-08-31",
+      "equity": 100000.0,
+      "operaciones_cerradas": 0,
+      "operaciones_abiertas": 0
+    }
   ]
 }
