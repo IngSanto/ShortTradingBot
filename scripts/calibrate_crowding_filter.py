@@ -11,6 +11,7 @@ criterio, no si un punto aislado se ve bien.
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -35,10 +36,19 @@ MIN_RETENCION = 0.70   # conserva al menos el 70% de las operaciones
 MAX_CAIDA_ER = 0.15    # el E[R] no cae mas de un 15%
 
 
-def cargar_diseno() -> dict[str, pd.DataFrame]:
+# Ultimo dia con cobertura real de funding en todo el universo (fin del ultimo
+# mes archivado). Mas alla de esto el dato esta congelado -ver docs/07,
+# seccion 4.1- y evaluar ahi seria juzgar el filtro donde no puede actuar.
+CORTE_FUNDING = "2026-07-31"
+
+
+def cargar_diseno(recortar_a_funding_valido: bool = True) -> dict[str, pd.DataFrame]:
     split = json.load(open(os.path.join(RAIZ, "config", "holdout_split.json")))
-    return {s: load_csv(os.path.join(RAIZ, "data", "cripto", f"{s}_1d.csv"))
-            for s in split["diseno"]}
+    universo = {s: load_csv(os.path.join(RAIZ, "data", "cripto", f"{s}_1d.csv"))
+                for s in split["diseno"]}
+    if recortar_a_funding_valido:
+        universo = {s: df.loc[:CORTE_FUNDING] for s, df in universo.items()}
+    return universo
 
 
 def correr(nombre: str, universo: dict, cfg, percentil: float | None, ventana: int) -> dict:
@@ -66,7 +76,16 @@ def correr(nombre: str, universo: dict, cfg, percentil: float | None, ventana: i
 
 
 def main() -> int:
-    universo = cargar_diseno()
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--incluir-tramo-sin-funding", action="store_true",
+                    help="No recortar al tramo con funding valido (reproduce "
+                         "el resultado contaminado por el hueco de datos, "
+                         "solo para comparar -ver docs/07 4.1)")
+    args = ap.parse_args()
+
+    universo = cargar_diseno(recortar_a_funding_valido=not args.incluir_tramo_sin_funding)
+    if not args.incluir_tramo_sin_funding:
+        print(f"Universo recortado a <= {CORTE_FUNDING} (limite real de cobertura de funding)")
     cfg = get_market("cripto").config()
 
     for nombre in ESTRATEGIAS:

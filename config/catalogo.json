@@ -1,6 +1,6 @@
 {
-  "version": 2,
-  "actualizado": "2026-08-30",
+  "version": 3,
+  "actualizado": "2026-08-31",
   "criterio_admision": {
     "puertas": "1, 2, 2.5 y 3 de docs/02-metodologia-validacion.md",
     "t_minimo": 2.87,
@@ -160,5 +160,17 @@
       "disparador_para_revisar": "Antes de: (a) añadir squeeze_breakdown en paralelo, (b) subir de tramo hacia dinero real, o (c) si el paper muestra varias posiciones abriéndose el mismo día con frecuencia.",
       "referencia": "docs/02-metodologia-validacion.md, regla de gestión de riesgo nº4"
     }
-  }
+  },
+  "filtros_de_riesgo_evaluados": [
+    {
+      "id": "filtro_aglomeracion_funding_individual",
+      "fecha": "2026-08-31",
+      "estado": "NO_ADOPTADO",
+      "mecanismo": "Veto de entradas nuevas cuando el funding del activo esta en su percentil extremo negativo (lado corto ya masificado).",
+      "resultado": "0 o 1 de 12 combinaciones de la rejilla (percentil x ventana) cumplen el criterio de exito pre-registrado, en las dos estrategias aprobadas. El peor trade no mejora de forma significativa en ninguna combinacion.",
+      "hallazgo_adicional": "Encontrado y corregido un hueco real en la actualizacion diaria: el archivo estatico de Binance no publica fundingRate diario (solo mensual), asi que el dato quedaba congelado ~30 dias. Confirmado ademas que la API en vivo de Binance esta bloqueada tanto en desarrollo como en el runner real de GitHub Actions: no hay via disponible para mantener el funding fresco en este sistema, lo que habria hecho el filtro inoperable en vivo aunque el mecanismo hubiera funcionado.",
+      "lead_no_perseguido": "Los peores trades vienen de eventos que sacuden a varios activos el mismo dia, no de que un activo concreto ya estuviera masificado. Un filtro de aglomeracion AGREGADO de mercado (no por activo) podria ser mas prometedor, pero no se probo aqui - necesitaria su propia pre-registracion.",
+      "referencia": "docs/07-filtro-aglomeracion.md"
+    }
+  ]
 }
