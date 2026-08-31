@@ -36,7 +36,10 @@ jobs:
           cache: pip
 
       - name: Instalar dependencias
-        run: pip install -r requirements.txt
+        # requirements-dev.txt incluye requirements.txt + pytest: sin esto el
+        # runner (que parte limpio, sin nada preinstalado a mano) no tiene
+        # pytest y la puerta de pruebas falla antes de poder ejecutarse.
+        run: pip install -r requirements-dev.txt
 
       - name: Comprobar que el motor sigue siendo correcto
         # Si las pruebas fallan NO se opera. Un motor roto produciría un

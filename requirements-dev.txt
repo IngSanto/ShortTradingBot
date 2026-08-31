@@ -1,0 +1,6 @@
+# Dependencias de desarrollo: pruebas y validación de que el motor sigue
+# siendo correcto antes de operar. requirements.txt son las dependencias
+# de ejecución real (paper trading / producción); esto es solo para CI y
+# desarrollo local, y no debería instalarse en un entorno de ejecución en vivo.
+-r requirements.txt
+pytest>=7.0
