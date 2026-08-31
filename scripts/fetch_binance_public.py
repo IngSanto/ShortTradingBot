@@ -145,21 +145,72 @@ def actualizar_reciente(symbol: str, interval: str, dias: int) -> pd.DataFrame:
     return out[["open", "high", "low", "close", "volume"]].astype(float)
 
 
+def actualizar_funding_en_vivo(symbol: str, dias: int) -> pd.Series:
+    """Funding reciente via la API en vivo, para el hueco que deja el archivo.
+
+    Binance solo publica fundingRate en ficheros MENSUALES (nunca diarios), asi
+    que el mes en curso queda sin cubrir por la via estatica -confirmado: un
+    fichero diario de fundingRate da 404-. Esta funcion intenta la API en
+    tiempo real como unica alternativa. Puede fallar por bloqueo geografico del
+    entorno donde se ejecute: se captura el fallo y se devuelve vacio, nunca se
+    propaga, porque la actualizacion de precios no debe caerse por esto.
+    """
+    import urllib.error
+    import urllib.request
+
+    hoy_ms = int(pd.Timestamp.now("UTC").timestamp() * 1000)
+    desde_ms = hoy_ms - dias * 86_400_000
+    url = (f"https://fapi.binance.com/fapi/v1/fundingRate?symbol={symbol}"
+           f"&startTime={desde_ms}&limit=1000")
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            import json as _json
+            datos = _json.loads(resp.read())
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as exc:
+        print(f"      [!] funding en vivo no accesible desde este entorno: {type(exc).__name__}")
+        return pd.Series(dtype=float)
+    if not datos:
+        return pd.Series(dtype=float)
+    f = pd.DataFrame(datos)
+    f["date"] = pd.to_datetime(f["fundingTime"].astype("int64"), unit="ms", utc=True).dt.tz_localize(None)
+    return f.set_index("date")["fundingRate"].astype(float).resample("D").sum(min_count=1)
+
+
 def fusionar(path: str, nuevas: pd.DataFrame) -> int:
-    """Anade barras nuevas a un CSV existente sin duplicar ni reescribir el pasado."""
+    """Anade barras nuevas a un CSV existente sin duplicar ni reescribir el pasado.
+
+    Excepcion deliberada: SI se rellena un funding_rate que estaba vacio en una
+    fecha ya guardada. No es "reescribir el pasado" -el precio de esa barra no
+    se toca, y la decision de entrar o no ya quedo fijada el dia que se tomo,
+    con el dato que hubiera entonces- es completar un dato que faltaba. Sin
+    esto, el hueco que deja el archivo estatico de Binance (no publica
+    fundingRate diario) nunca se cerraria ni aunque la API en vivo funcione.
+    """
     if nuevas.empty:
         return 0
-    if os.path.exists(path):
-        viejo = pd.read_csv(path, parse_dates=["date"]).set_index("date")
-        # Las barras ya guardadas mandan: reescribir el pasado en un sistema que
-        # ya ha operado sobre el equivaldria a falsear el registro.
-        solo_nuevas = nuevas[~nuevas.index.isin(viejo.index)]
-        if solo_nuevas.empty:
-            return 0
-        combinado = pd.concat([viejo, solo_nuevas]).sort_index()
-    else:
-        solo_nuevas, combinado = nuevas, nuevas
+    if not os.path.exists(path):
+        nuevas.to_csv(path, index_label="date")
+        return len(nuevas)
+
+    viejo = pd.read_csv(path, parse_dates=["date"]).set_index("date")
+    solo_nuevas = nuevas[~nuevas.index.isin(viejo.index)]
+
+    rellenados = 0
+    if "funding_rate" in nuevas.columns and "funding_rate" in viejo.columns:
+        comunes = nuevas.index.intersection(viejo.index)
+        huecos = comunes[viejo.loc[comunes, "funding_rate"].isna()
+                         & nuevas.loc[comunes, "funding_rate"].notna()]
+        if len(huecos):
+            viejo.loc[huecos, "funding_rate"] = nuevas.loc[huecos, "funding_rate"]
+            rellenados = len(huecos)
+
+    if solo_nuevas.empty and rellenados == 0:
+        return 0
+    combinado = pd.concat([viejo, solo_nuevas]).sort_index()
     combinado.to_csv(path, index_label="date")
+    if rellenados:
+        print(f"      (+{rellenados} huecos de funding rellenados en fechas ya guardadas)")
     return len(solo_nuevas)
 
 
@@ -184,6 +235,7 @@ def main() -> int:
         print(f"\nActualizando los ultimos {args.recientes} dias "
               f"({len(args.symbols)} simbolos, {args.interval})\n")
         total = 0
+        funding_ok = 0
         for symbol in args.symbols:
             path = os.path.join(DATA_DIR, f"{symbol}_{args.interval}.csv")
             if not os.path.exists(path):
@@ -194,11 +246,23 @@ def main() -> int:
             except Exception as exc:
                 print(f"  [x] {symbol}: {type(exc).__name__}: {exc}")
                 continue
+
+            # El archivo estatico de Binance NUNCA publica fundingRate diario
+            # (solo mensual): sin esto el dato queda congelado desde la ultima
+            # descarga mensual y el filtro de aglomeracion operaria a ciegas
+            # en el tramo mas reciente, que es donde mas importa.
+            funding_reciente = actualizar_funding_en_vivo(symbol, args.recientes)
+            if not funding_reciente.empty and not nuevas.empty:
+                nuevas = nuevas.copy()
+                nuevas["funding_rate"] = funding_reciente.reindex(nuevas.index)
+                funding_ok += 1
+
             n = fusionar(path, nuevas)
             total += n
             ultima = pd.read_csv(path, parse_dates=["date"])["date"].max().date()
             print(f"  [v] {symbol}: +{n} barras (hasta {ultima})")
-        print(f"\n{total} barras nuevas en total.")
+        print(f"\n{total} barras nuevas en total. "
+              f"Funding en vivo obtenido para {funding_ok}/{len(args.symbols)} simbolos.")
         return 0
 
     meses = _meses(args.start, args.end)

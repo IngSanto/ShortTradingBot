@@ -103,9 +103,13 @@ def main() -> int:
         print("Actualizando barras recientes desde el archivo diario...")
         simbolos = [os.path.basename(p).split("_")[0]
                     for p in sorted(glob.glob(os.path.join(RAIZ, "data", "cripto", "*_1d.csv")))]
+        # 35 dias, no 10: el funding solo se puede refrescar via la API en vivo
+        # (el archivo estatico no publica fundingRate diario), y esa ventana
+        # cubre de sobra un mes en curso completo. Con 10 dejaria un hueco
+        # permanente entre el cierre del ultimo mes archivado y hoy.
         subprocess.run([sys.executable,
                         os.path.join(RAIZ, "scripts", "fetch_binance_public.py"),
-                        "--recientes", "10", "--interval", "1d",
+                        "--recientes", "35", "--interval", "1d",
                         "--symbols", *simbolos], check=False)
 
     perfil = get_market("cripto")
