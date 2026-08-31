@@ -49,11 +49,16 @@ jobs:
       - name: Actualizar datos y avanzar el paper trading
         run: python scripts/paper_run.py --actualizar --riesgo 0.001 --retraso 1
 
+      - name: Generar el dashboard (docs/index.html, GitHub Pages)
+        # Estático, sin CDN: se consulta gratis desde cualquier navegador, sin
+        # abrir Claude ni gastar tokens. Se regenera aquí, no en cada visita.
+        run: python scripts/build_dashboard.py
+
       - name: Commitear el estado
         run: |
           git config user.name "paper-trading-bot"
           git config user.email "actions@github.com"
-          git add state/ data/ 2>/dev/null || true
+          git add state/ data/ docs/ 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "Sin cambios que registrar."
           else

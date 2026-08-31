@@ -149,6 +149,7 @@ def main() -> int:
     if not log_total:
         print("Sin barras nuevas que procesar.")
 
+    estado.registrar_snapshot(pd.Timestamp.now("UTC").strftime("%Y-%m-%d"))
     estado.guardar(ESTADO)
     informe(estado, catalogo)
     print(f"Estado guardado en {os.path.relpath(ESTADO, RAIZ)}. "

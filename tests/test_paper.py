@@ -5,6 +5,7 @@ reglas divergieran, un paper peor que el backtest no diría nada sobre el
 mercado, solo sobre la diferencia entre dos implementaciones.
 """
 
+import json
 import os
 import sys
 
@@ -86,3 +87,32 @@ def test_el_resumen_no_falla_sin_operaciones():
     estado = EstadoPapel(creado="t", equity_inicial=100_000.0, equity=100_000.0)
     r = resumen(estado)
     assert r["operaciones"] == 0 and r["retorno"] == 0.0
+
+
+def test_registrar_snapshot_es_idempotente_por_dia():
+    """Correr paper_run dos veces el mismo día no debe duplicar el punto de
+    la curva de equity: se reemplaza, no se acumula."""
+    estado = EstadoPapel(creado="t", equity_inicial=100_000.0, equity=100_000.0)
+    estado.registrar_snapshot("2026-08-31")
+    estado.equity = 100_500.0
+    estado.registrar_snapshot("2026-08-31")
+
+    assert len(estado.historial) == 1
+    assert estado.historial[0]["equity"] == 100_500.0
+
+    estado.registrar_snapshot("2026-09-01")
+    assert len(estado.historial) == 2
+
+
+def test_cargar_completa_historial_para_estados_previos_a_esta_funcion():
+    """state/paper.json ya existía en producción antes de que existiera
+    'historial': cargar un estado antiguo no debe romperse por la clave
+    ausente."""
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "paper.json")
+        json.dump({"creado": "t", "equity_inicial": 100_000.0, "equity": 100_000.0},
+                  open(path, "w"))
+        estado = EstadoPapel.cargar(path)
+        assert estado.historial == []

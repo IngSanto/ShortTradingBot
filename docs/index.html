@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShortTradingBot — Paper trading</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1:  #fcfcfb;
+    --page:       #f9f9f7;
+    --text-1:     #0b0b0b;
+    --text-2:     #52514e;
+    --muted:      #898781;
+    --grid:       #e1e0d9;
+    --baseline:   #c3c2b7;
+    --border:     rgba(11,11,11,0.10);
+    --blue:       #2a78d6;
+    --good-text:  #006300;
+    --good-bg:    #e6f4e6;
+    --bad-text:   #b3221f;
+    --bad-bg:     #fbe9e8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --surface-1:  #1a1a19;
+      --page:       #0d0d0d;
+      --text-1:     #ffffff;
+      --text-2:     #c3c2b7;
+      --muted:      #898781;
+      --grid:       #2c2c2a;
+      --baseline:   #383835;
+      --border:     rgba(255,255,255,0.10);
+      --blue:       #3987e5;
+      --good-text:  #0ca30c;
+      --good-bg:    #123312;
+      --bad-text:   #e66767;
+      --bad-bg:     #3a1a19;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--page); color: var(--text-1);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 28px 20px 64px; }
+  header { margin-bottom: 24px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .subtitle { color: var(--text-2); font-size: 14px; }
+  .badge-mercado {
+    display: inline-block; padding: 2px 9px; border-radius: 999px;
+    background: var(--surface-1); border: 1px solid var(--border);
+    font-size: 12px; color: var(--text-2); margin-left: 8px;
+  }
+  .updated { color: var(--muted); font-size: 12.5px; margin-top: 6px; }
+  h2 { font-size: 16px; margin: 32px 0 12px; }
+  .card {
+    background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px;
+  }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  @media (max-width: 720px) { .tiles { grid-template-columns: repeat(2, 1fr); } }
+  .tile {
+    background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+  }
+  .tile-label { font-size: 12.5px; color: var(--text-2); }
+  .tile-value { font-size: 24px; font-weight: 600; margin-top: 2px; }
+  .tile-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .tile-good .tile-value { color: var(--good-text); }
+  .tile-bad .tile-value { color: var(--bad-text); }
+  .equity-chart { width: 100%; height: auto; }
+  .grid { stroke: var(--grid); stroke-width: 1; }
+  .baseline-inicial { stroke: var(--baseline); stroke-width: 1; stroke-dasharray: 3 3; }
+  .axis-label { font-size: 10px; fill: var(--muted); font-family: system-ui, sans-serif; }
+  .area-fill { fill: var(--blue); opacity: 0.10; stroke: none; }
+  .line-main { fill: none; stroke: var(--blue); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .end-dot { fill: var(--blue); stroke: var(--surface-1); stroke-width: 2; }
+  .end-label { font-size: 12px; fill: var(--text-1); font-weight: 600; font-family: system-ui, sans-serif; }
+  .empty-chart { color: var(--muted); font-size: 13.5px; padding: 40px 0; text-align: center; }
+  table.tabla { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.tabla th {
+    text-align: left; font-weight: 600; color: var(--text-2);
+    font-size: 12px; text-transform: uppercase; letter-spacing: .02em;
+    padding: 6px 10px; border-bottom: 1px solid var(--border);
+  }
+  table.tabla td { padding: 7px 10px; border-bottom: 1px solid var(--grid); }
+  table.tabla tr:last-child td { border-bottom: none; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.mono { font-family: ui-monospace, "SF Mono", monospace; font-size: 13px; }
+  .muted { color: var(--muted); }
+  .caption { color: var(--muted); font-size: 12px; margin: 6px 2px 0; }
+  .badge-good, .badge-bad {
+    display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+  }
+  .badge-good { color: var(--good-text); background: var(--good-bg); }
+  .badge-bad { color: var(--bad-text); background: var(--bad-bg); }
+  .table-scroll { overflow-x: auto; }
+  footer { margin-top: 40px; color: var(--muted); font-size: 12.5px; line-height: 1.6; }
+  footer a { color: var(--text-2); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>ShortTradingBot — Paper trading
+      <span class="badge-mercado">cripto</span>
+    </h1>
+    <div class="subtitle">Puerta 4 de la validación: papel, sin dinero real, mínimo 50 operaciones o 60 sesiones.</div>
+    <div class="updated">Última actualización: 2026-08-31 04:59 UTC · generado automáticamente, sin intervención de Claude</div>
+  </header>
+
+  <section class="tiles">
+    <div class="tile ">
+      <div class="tile-label">Equity</div>
+      <div class="tile-value">$100,000</div>
+      <div class="tile-sub">+0.00%</div>
+    </div>
+    <div class="tile ">
+      <div class="tile-label">Operaciones cerradas</div>
+      <div class="tile-value">0</div>
+      <div class="tile-sub">objetivo: 50</div>
+    </div>
+    <div class="tile ">
+      <div class="tile-label">Expectativa</div>
+      <div class="tile-value">— R</div>
+      <div class="tile-sub">aún sin datos</div>
+    </div>
+    <div class="tile ">
+      <div class="tile-label">Acierto</div>
+      <div class="tile-value">—</div>
+      
+    </div>
+    <div class="tile ">
+      <div class="tile-label">Peor operación</div>
+      <div class="tile-value">—</div>
+      
+    </div>
+    <div class="tile ">
+      <div class="tile-label">Posiciones abiertas</div>
+      <div class="tile-value">0</div>
+      <div class="tile-sub">2 señal(es) pendiente(s)</div>
+    </div>
+    <div class="tile ">
+      <div class="tile-label">Días corriendo</div>
+      <div class="tile-value">1</div>
+      <div class="tile-sub">desde 2026-08-30</div>
+    </div>
+    <div class="tile ">
+      <div class="tile-label">Progreso puerta 4</div>
+      <div class="tile-value">2%</div>
+      <div class="tile-sub">en curso</div>
+    </div></section>
+
+  <h2>Curva de equity</h2>
+  <div class="card">
+    <div class="empty-chart">Aún no hay suficientes días para dibujar la curva. Vuelve cuando haya al menos 2 sesiones.</div>
+  </div>
+
+  <h2>Paper vs. lo que prometía el backtest</h2>
+  <div class="card table-scroll"><p class="muted">Sin operaciones cerradas todavía: nada que contrastar contra el backtest.</p></div>
+
+  <h2>Bitácora — operaciones cerradas recientes</h2>
+  <div class="card table-scroll">
+    <table class="tabla">
+      <thead><tr><th>Salida</th><th>Activo</th><th>Estrategia</th><th>Motivo</th><th class="num">Barras</th><th class="num">Resultado</th></tr></thead>
+      <tbody><tr><td colspan="6" class="muted">Sin operaciones cerradas todavía.</td></tr></tbody>
+    </table>
+  </div>
+
+  <h2>Posiciones abiertas ahora</h2>
+  <div class="card table-scroll">
+    <table class="tabla">
+      <thead><tr><th>Entrada</th><th>Activo</th><th>Estrategia</th><th class="num">Precio entrada</th><th class="num">Stop</th><th class="num">Barras</th></tr></thead>
+      <tbody><tr><td colspan="6" class="muted">Ninguna posición abierta ahora mismo.</td></tr></tbody>
+    </table>
+  </div>
+
+  <h2>Señales pendientes de ejecutar</h2>
+  <div class="card table-scroll">
+    <table class="tabla">
+      <thead><tr><th>Señal</th><th>Activo</th><th>Estrategia</th><th>Parámetros de riesgo</th></tr></thead>
+      <tbody>
+      <tr>
+        <td>2026-08-29</td>
+        <td class="mono">ARBUSDT</td>
+        <td>pullback_to_ema_short</td>
+        <td>stop 2.0×ATR / obj 4.0×ATR</td>
+      </tr>
+      <tr>
+        <td>2026-08-29</td>
+        <td class="mono">ZILUSDT</td>
+        <td>pullback_to_ema_short</td>
+        <td>stop 2.0×ATR / obj 4.0×ATR</td>
+      </tr></tbody>
+    </table>
+  </div>
+
+  <footer>
+    Dinero simulado. Nada en esta página es asesoramiento financiero.
+    Metodología completa en <a href="https://github.com/IngSanto/ShortTradingBot/blob/main/docs/02-metodologia-validacion.md">docs/02-metodologia-validacion.md</a>
+    y el catálogo de estrategias en <a href="https://github.com/IngSanto/ShortTradingBot/blob/main/config/catalogo.json">config/catalogo.json</a>.
+  </footer>
+</div>
+</body>
+</html>

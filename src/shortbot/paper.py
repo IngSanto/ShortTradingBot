@@ -67,13 +67,32 @@ class EstadoPapel:
     abiertas: list[dict] = field(default_factory=list)
     cerradas: list[dict] = field(default_factory=list)
     pendientes: list[dict] = field(default_factory=list)
+    # Una foto diaria de equity/operaciones para poder dibujar una curva real.
+    # `equity` por sí solo es un escalar: sin este historial no hay forma de
+    # saber cómo se llegó hasta ahí.
+    historial: list[dict] = field(default_factory=list)
 
     @classmethod
     def cargar(cls, path: str, equity_inicial: float = 100_000.0) -> "EstadoPapel":
         if os.path.exists(path):
-            return cls(**json.load(open(path)))
+            datos = json.load(open(path))
+            datos.setdefault("historial", [])
+            return cls(**datos)
         return cls(creado=datetime.now(timezone.utc).isoformat(timespec="seconds"),
                    equity_inicial=equity_inicial, equity=equity_inicial)
+
+    def registrar_snapshot(self, fecha: str) -> None:
+        """Añade (o reemplaza, si ya corrió hoy) la foto del día en curso."""
+        punto = {
+            "fecha": fecha,
+            "equity": self.equity,
+            "operaciones_cerradas": len(self.cerradas),
+            "operaciones_abiertas": len(self.abiertas),
+        }
+        if self.historial and self.historial[-1]["fecha"] == fecha:
+            self.historial[-1] = punto
+        else:
+            self.historial.append(punto)
 
     def guardar(self, path: str) -> None:
         os.makedirs(os.path.dirname(path), exist_ok=True)
