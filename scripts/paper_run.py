@@ -103,13 +103,16 @@ def main() -> int:
         print("Actualizando barras recientes desde el archivo diario...")
         simbolos = [os.path.basename(p).split("_")[0]
                     for p in sorted(glob.glob(os.path.join(RAIZ, "data", "cripto", "*_1d.csv")))]
-        # 35 dias, no 10: el funding solo se puede refrescar via la API en vivo
-        # (el archivo estatico no publica fundingRate diario), y esa ventana
-        # cubre de sobra un mes en curso completo. Con 10 dejaria un hueco
-        # permanente entre el cierre del ultimo mes archivado y hoy.
+        # Vuelto a 10 (no 35). La ventana ancha solo tenia sentido para que la
+        # API en vivo pudiera rellenar el hueco de funding de todo el mes -esa
+        # via esta confirmada bloqueada (docs/07, seccion 4.1) y apagada por
+        # defecto, asi que ampliar la ventana ya no rellena nada de funding,
+        # solo pide 3,5x mas ficheros diarios de velas sin ningun beneficio.
+        # Medido: 35 dias tardaba ~51s para 3 simbolos -> ~11 min para los 40,
+        # justo lo que se vio atascado en un run real. Con 10, ~3 min.
         subprocess.run([sys.executable,
                         os.path.join(RAIZ, "scripts", "fetch_binance_public.py"),
-                        "--recientes", "35", "--interval", "1d",
+                        "--recientes", "10", "--interval", "1d",
                         "--symbols", *simbolos], check=False)
 
     perfil = get_market("cripto")
