@@ -151,9 +151,17 @@ def actualizar_funding_en_vivo(symbol: str, dias: int) -> pd.Series:
     Binance solo publica fundingRate en ficheros MENSUALES (nunca diarios), asi
     que el mes en curso queda sin cubrir por la via estatica -confirmado: un
     fichero diario de fundingRate da 404-. Esta funcion intenta la API en
-    tiempo real como unica alternativa. Puede fallar por bloqueo geografico del
-    entorno donde se ejecute: se captura el fallo y se devuelve vacio, nunca se
-    propaga, porque la actualizacion de precios no debe caerse por esto.
+    tiempo real como unica alternativa.
+
+    CONFIRMADO (31-ago-2026, log de la Action): fapi.binance.com devuelve
+    HTTPError tanto desde el entorno de desarrollo como desde el runner real de
+    GitHub Actions -0/40 simbolos. Es un bloqueo geografico de Binance que
+    alcanza a la infraestructura de ambos, no un problema de red puntual. Por
+    eso esta via esta APAGADA por defecto (activar_en_vivo=False): sin eso, 40
+    intentos en serie con timeout largo anadian ~7 minutos a cada ejecucion
+    diaria sin ningun beneficio. Se deja el codigo por si algun dia se ejecuta
+    desde una region que si tenga acceso, con un timeout corto para que un
+    fallo no cueste caro si se reactiva.
     """
     import urllib.error
     import urllib.request
@@ -164,7 +172,7 @@ def actualizar_funding_en_vivo(symbol: str, dias: int) -> pd.Series:
            f"&startTime={desde_ms}&limit=1000")
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=20) as resp:
+        with urllib.request.urlopen(req, timeout=4) as resp:
             import json as _json
             datos = _json.loads(resp.read())
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as exc:
@@ -224,6 +232,9 @@ def main() -> int:
     ap.add_argument("--interval", default="1d", help="1d, 4h, 1h, 15m...")
     ap.add_argument("--start", default="2020-01", help="Mes inicial YYYY-MM")
     ap.add_argument("--end", default=None, help="Mes final YYYY-MM")
+    ap.add_argument("--funding-en-vivo", action="store_true",
+                    help="Intentar la API en vivo de Binance para funding del mes en curso "
+                         "(confirmado bloqueada desde dev y desde GitHub Actions; apagada por defecto)")
     ap.add_argument("--recientes", type=int, default=0,
                     help="En vez de meses, anade los ultimos N dias desde los "
                          "ficheros diarios (para mantener el paper al dia)")
@@ -247,11 +258,13 @@ def main() -> int:
                 print(f"  [x] {symbol}: {type(exc).__name__}: {exc}")
                 continue
 
-            # El archivo estatico de Binance NUNCA publica fundingRate diario
-            # (solo mensual): sin esto el dato queda congelado desde la ultima
-            # descarga mensual y el filtro de aglomeracion operaria a ciegas
-            # en el tramo mas reciente, que es donde mas importa.
-            funding_reciente = actualizar_funding_en_vivo(symbol, args.recientes)
+            # Confirmado que fapi.binance.com esta bloqueado tanto en desarrollo
+            # como en el runner real de GitHub Actions (31-ago-2026): apagado
+            # por defecto para no pagar ~7 minutos diarios de timeouts por una
+            # llamada que nunca va a funcionar desde esta infraestructura.
+            # --funding-en-vivo lo reactiva si algun dia cambia el bloqueo.
+            funding_reciente = (actualizar_funding_en_vivo(symbol, args.recientes)
+                                if args.funding_en_vivo else pd.Series(dtype=float))
             if not funding_reciente.empty and not nuevas.empty:
                 nuevas = nuevas.copy()
                 nuevas["funding_rate"] = funding_reciente.reindex(nuevas.index)
