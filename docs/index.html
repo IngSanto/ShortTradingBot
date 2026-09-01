@@ -109,64 +109,96 @@
       <span class="badge-mercado">cripto</span>
     </h1>
     <div class="subtitle">Puerta 4 de la validación: papel, sin dinero real, mínimo 50 operaciones o 60 sesiones.</div>
-    <div class="updated">Última actualización: 2026-08-31 13:15 UTC · generado automáticamente, sin intervención de Claude</div>
+    <div class="updated">Última actualización: 2026-09-01 11:28 UTC · generado automáticamente, sin intervención de Claude</div>
   </header>
 
   <section class="tiles">
-    <div class="tile ">
+    <div class="tile tile-bad">
       <div class="tile-label">Equity</div>
-      <div class="tile-value">$100,000</div>
-      <div class="tile-sub">+0.00%</div>
+      <div class="tile-value">$99,899</div>
+      <div class="tile-sub">-0.10%</div>
     </div>
     <div class="tile ">
       <div class="tile-label">Operaciones cerradas</div>
-      <div class="tile-value">0</div>
+      <div class="tile-value">1</div>
       <div class="tile-sub">objetivo: 50</div>
     </div>
     <div class="tile ">
       <div class="tile-label">Expectativa</div>
-      <div class="tile-value">— R</div>
-      <div class="tile-sub">aún sin datos</div>
+      <div class="tile-value">-1.012 R</div>
+      <div class="tile-sub">por operación</div>
     </div>
     <div class="tile ">
       <div class="tile-label">Acierto</div>
-      <div class="tile-value">—</div>
-      
+      <div class="tile-value">0.0%</div>
+      <div class="tile-sub">profit factor 0.00</div>
     </div>
     <div class="tile ">
       <div class="tile-label">Peor operación</div>
-      <div class="tile-value">—</div>
+      <div class="tile-value">-1.01 R</div>
       
     </div>
     <div class="tile ">
       <div class="tile-label">Posiciones abiertas</div>
-      <div class="tile-value">0</div>
-      <div class="tile-sub">14 señal(es) pendiente(s)</div>
+      <div class="tile-value">1</div>
+      <div class="tile-sub">12 señal(es) pendiente(s)</div>
     </div>
     <div class="tile ">
       <div class="tile-label">Días corriendo</div>
-      <div class="tile-value">1</div>
+      <div class="tile-value">2</div>
       <div class="tile-sub">desde 2026-08-30</div>
     </div>
     <div class="tile ">
       <div class="tile-label">Progreso puerta 4</div>
-      <div class="tile-value">2%</div>
+      <div class="tile-value">3%</div>
       <div class="tile-sub">en curso</div>
     </div></section>
 
   <h2>Curva de equity</h2>
   <div class="card">
-    <div class="empty-chart">Aún no hay suficientes días para dibujar la curva. Vuelve cuando haya al menos 2 sesiones.</div>
+    
+    <svg viewBox="0 0 720 220" class="equity-chart" role="img"
+         aria-label="Curva de equity del paper trading">
+      <line x1="56" y1="183.5" x2="704" y2="183.5" class="grid"/><text x="48" y="187.5" class="axis-label" text-anchor="end">99,000</text><line x1="56" y1="99.8" x2="704" y2="99.8" class="grid"/><text x="48" y="103.8" class="axis-label" text-anchor="end">100,000</text><line x1="56" y1="16.0" x2="704" y2="16.0" class="grid"/><text x="48" y="20.0" class="axis-label" text-anchor="end">101,000</text>
+      <line x1="56" y1="99.8" x2="704" y2="99.8"
+            class="baseline-inicial"/>
+      <polygon points="56.0,192.0 56.0,99.8 704.0,108.2 704.0,192.0" class="area-fill"/>
+      <polyline points="56.0,99.8 704.0,108.2" class="line-main"/>
+      <circle cx="704.0" cy="108.2" r="4.5" class="end-dot"/>
+      <text x="698.0" y="98.2" class="end-label"
+            text-anchor="end">99,899</text>
+    </svg>
   </div>
 
   <h2>Paper vs. lo que prometía el backtest</h2>
-  <div class="card table-scroll"><p class="muted">Sin operaciones cerradas todavía: nada que contrastar contra el backtest.</p></div>
+  <div class="card table-scroll">
+        <table class="tabla">
+          <thead><tr><th>Estrategia</th><th class="num">n</th><th class="num">E[R] real</th>
+          <th class="num">E[R] esperado*</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>pullback_to_ema_short</td>
+              <td class="num">1</td>
+              <td class="num">-1.012 R</td>
+              <td class="num">+0.124 R</td>
+              <td class="badge-">muestra corta (n=1)</td>
+            </tr></tbody>
+        </table>
+        <p class="caption">* del backtest, con el mismo retraso de ejecución (1 barra) que usa el paper.</p></div>
 
   <h2>Bitácora — operaciones cerradas recientes</h2>
   <div class="card table-scroll">
     <table class="tabla">
       <thead><tr><th>Salida</th><th>Activo</th><th>Estrategia</th><th>Motivo</th><th class="num">Barras</th><th class="num">Resultado</th></tr></thead>
-      <tbody><tr><td colspan="6" class="muted">Sin operaciones cerradas todavía.</td></tr></tbody>
+      <tbody>
+      <tr>
+        <td>2026-08-31</td>
+        <td class="mono">ARBUSDT</td>
+        <td>pullback_to_ema_short</td>
+        <td>stop</td>
+        <td class="num">1</td>
+        <td class="num badge-bad">▼ -1.01 R</td>
+      </tr></tbody>
     </table>
   </div>
 
@@ -174,7 +206,15 @@
   <div class="card table-scroll">
     <table class="tabla">
       <thead><tr><th>Entrada</th><th>Activo</th><th>Estrategia</th><th class="num">Precio entrada</th><th class="num">Stop</th><th class="num">Barras</th></tr></thead>
-      <tbody><tr><td colspan="6" class="muted">Ninguna posición abierta ahora mismo.</td></tr></tbody>
+      <tbody>
+      <tr>
+        <td>2026-08-31</td>
+        <td class="mono">ZILUSDT</td>
+        <td>pullback_to_ema_short</td>
+        <td class="num">0.0025</td>
+        <td class="num">0.0029</td>
+        <td class="num">1/20</td>
+      </tr></tbody>
     </table>
   </div>
 
@@ -183,18 +223,6 @@
     <table class="tabla">
       <thead><tr><th>Señal</th><th>Activo</th><th>Estrategia</th><th>Parámetros de riesgo</th></tr></thead>
       <tbody>
-      <tr>
-        <td>2026-08-29</td>
-        <td class="mono">ARBUSDT</td>
-        <td>pullback_to_ema_short</td>
-        <td>stop 2.0×ATR / obj 4.0×ATR</td>
-      </tr>
-      <tr>
-        <td>2026-08-29</td>
-        <td class="mono">ZILUSDT</td>
-        <td>pullback_to_ema_short</td>
-        <td>stop 2.0×ATR / obj 4.0×ATR</td>
-      </tr>
       <tr>
         <td>2026-08-30</td>
         <td class="mono">ADAUSDT</td>

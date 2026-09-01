@@ -1,71 +1,82 @@
 {
   "creado": "2026-08-30T01:16:00+00:00",
   "equity_inicial": 100000.0,
-  "equity": 100000.0,
+  "equity": 99898.756509933,
   "ultima_barra": {
-    "pullback_to_ema_short|AAVEUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|ADAUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|ALGOUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|APTUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|ARBUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|ATOMUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|AVAXUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|AXSUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|BNBUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|BTCUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|CHZUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|DOGEUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|DOTUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|ETCUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|ETHUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|FILUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|FTMUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|GALAUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|GRTUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|HBARUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|ICPUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|INJUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|LINKUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|LTCUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|MANAUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|NEARUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|OPUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|RUNEUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|SANDUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|SOLUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|SUIUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|THETAUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|TIAUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|TRXUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|UNIUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|VETUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|XLMUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|XRPUSDT": "2026-08-30 00:00:00",
-    "pullback_to_ema_short|ZILUSDT": "2026-08-30 00:00:00"
+    "pullback_to_ema_short|AAVEUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|ADAUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|ALGOUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|APTUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|ARBUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|ATOMUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|AVAXUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|AXSUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|BNBUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|BTCUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|CHZUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|DOGEUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|DOTUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|ETCUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|ETHUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|FILUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|FTMUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|GALAUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|GRTUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|HBARUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|ICPUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|INJUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|LINKUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|LTCUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|MANAUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|NEARUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|OPUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|RUNEUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|SANDUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|SOLUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|SUIUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|THETAUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|TIAUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|TRXUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|UNIUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|VETUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|XLMUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|XRPUSDT": "2026-08-31 00:00:00",
+    "pullback_to_ema_short|ZILUSDT": "2026-08-31 00:00:00"
   },
-  "abiertas": [],
-  "cerradas": [],
-  "pendientes": [
-    {
-      "estrategia": "pullback_to_ema_short",
-      "simbolo": "ARBUSDT",
-      "fecha_senal": "2026-08-29 00:00:00",
-      "atr": 0.0060394091068866375,
-      "stop_atr": 2.0,
-      "target_atr": 4.0,
-      "max_bars": 20,
-      "espera": 0
-    },
+  "abiertas": [
     {
       "estrategia": "pullback_to_ema_short",
       "simbolo": "ZILUSDT",
       "fecha_senal": "2026-08-29 00:00:00",
-      "atr": 0.00017999018231900285,
-      "stop_atr": 2.0,
-      "target_atr": 4.0,
-      "max_bars": 20,
-      "espera": 0
-    },
+      "fecha_entrada": "2026-08-31 00:00:00",
+      "precio_entrada": 0.002517,
+      "cantidad": 277511.68208963465,
+      "stop": 0.002876980364638006,
+      "objetivo": 0.0017970392707239886,
+      "max_barras": 20,
+      "barras": 1,
+      "riesgo": 99.898756509933
+    }
+  ],
+  "cerradas": [
+    {
+      "estrategia": "pullback_to_ema_short",
+      "simbolo": "ARBUSDT",
+      "fecha_senal": "2026-08-29 00:00:00",
+      "fecha_entrada": "2026-08-31 00:00:00",
+      "fecha_salida": "2026-08-31 00:00:00",
+      "precio_entrada": 0.08418,
+      "precio_salida": 0.09625881821377327,
+      "cantidad": 8278.955625474326,
+      "barras": 1,
+      "motivo": "stop",
+      "comisiones": 1.4191527206496146,
+      "carry": -0.17566265364061215,
+      "pnl": -101.24349006700895,
+      "r_multiple": -1.0124349006700895
+    }
+  ],
+  "pendientes": [
     {
       "estrategia": "pullback_to_ema_short",
       "simbolo": "ADAUSDT",
@@ -74,7 +85,7 @@
       "stop_atr": 2.0,
       "target_atr": 4.0,
       "max_bars": 20,
-      "espera": 1
+      "espera": 0
     },
     {
       "estrategia": "pullback_to_ema_short",
@@ -84,7 +95,7 @@
       "stop_atr": 2.0,
       "target_atr": 4.0,
       "max_bars": 20,
-      "espera": 1
+      "espera": 0
     },
     {
       "estrategia": "pullback_to_ema_short",
@@ -94,7 +105,7 @@
       "stop_atr": 2.0,
       "target_atr": 4.0,
       "max_bars": 20,
-      "espera": 1
+      "espera": 0
     },
     {
       "estrategia": "pullback_to_ema_short",
@@ -104,7 +115,7 @@
       "stop_atr": 2.0,
       "target_atr": 4.0,
       "max_bars": 20,
-      "espera": 1
+      "espera": 0
     },
     {
       "estrategia": "pullback_to_ema_short",
@@ -114,7 +125,7 @@
       "stop_atr": 2.0,
       "target_atr": 4.0,
       "max_bars": 20,
-      "espera": 1
+      "espera": 0
     },
     {
       "estrategia": "pullback_to_ema_short",
@@ -124,7 +135,7 @@
       "stop_atr": 2.0,
       "target_atr": 4.0,
       "max_bars": 20,
-      "espera": 1
+      "espera": 0
     },
     {
       "estrategia": "pullback_to_ema_short",
@@ -134,7 +145,7 @@
       "stop_atr": 2.0,
       "target_atr": 4.0,
       "max_bars": 20,
-      "espera": 1
+      "espera": 0
     },
     {
       "estrategia": "pullback_to_ema_short",
@@ -144,7 +155,7 @@
       "stop_atr": 2.0,
       "target_atr": 4.0,
       "max_bars": 20,
-      "espera": 1
+      "espera": 0
     },
     {
       "estrategia": "pullback_to_ema_short",
@@ -154,7 +165,7 @@
       "stop_atr": 2.0,
       "target_atr": 4.0,
       "max_bars": 20,
-      "espera": 1
+      "espera": 0
     },
     {
       "estrategia": "pullback_to_ema_short",
@@ -164,7 +175,7 @@
       "stop_atr": 2.0,
       "target_atr": 4.0,
       "max_bars": 20,
-      "espera": 1
+      "espera": 0
     },
     {
       "estrategia": "pullback_to_ema_short",
@@ -174,7 +185,7 @@
       "stop_atr": 2.0,
       "target_atr": 4.0,
       "max_bars": 20,
-      "espera": 1
+      "espera": 0
     },
     {
       "estrategia": "pullback_to_ema_short",
@@ -184,7 +195,7 @@
       "stop_atr": 2.0,
       "target_atr": 4.0,
       "max_bars": 20,
-      "espera": 1
+      "espera": 0
     }
   ],
   "historial": [
@@ -193,6 +204,12 @@
       "equity": 100000.0,
       "operaciones_cerradas": 0,
       "operaciones_abiertas": 0
+    },
+    {
+      "fecha": "2026-09-01",
+      "equity": 99898.756509933,
+      "operaciones_cerradas": 1,
+      "operaciones_abiertas": 1
     }
   ]
 }
