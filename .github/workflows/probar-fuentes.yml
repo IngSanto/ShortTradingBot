@@ -1,0 +1,46 @@
+name: Sondeo de fuentes de noticias
+
+# Comprueba QUE fuentes de noticias/calendario son alcanzables desde un runner
+# real de GitHub Actions -que es donde el bot opera-, no desde una sesion de
+# desarrollo con su propia politica de red.
+#
+# Es un sondeo, no una puerta: no bloquea nada y no toca el estado del paper
+# trading. Existe porque con el funding de Binance se calibro un filtro entero
+# antes de descubrir que el dato no se podia refrescar en vivo (docs/07).
+
+on:
+  push:
+    # Solo cuando cambia el propio sondeo: no hace falta correrlo en cada commit.
+    paths:
+      - "scripts/probar_fuentes_noticias.py"
+      - ".github/workflows/probar-fuentes.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read              # solo lee: no commitea nada
+
+jobs:
+  sondear:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Sondear las fuentes candidatas
+        # Sin dependencias: el script usa solo la libreria estandar, para que
+        # el resultado mida la red del runner y no un fallo de instalacion.
+        run: python scripts/probar_fuentes_noticias.py | tee /tmp/sondeo.txt
+
+      - name: Informe en el resumen de la ejecución
+        if: always()
+        run: |
+          {
+            echo '## Fuentes alcanzables desde el runner'
+            echo '```'
+            cat /tmp/sondeo.txt 2>/dev/null || echo 'El sondeo no produjo salida.'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
