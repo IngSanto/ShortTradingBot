@@ -186,3 +186,71 @@ def test_el_retraso_de_ejecucion_desplaza_la_entrada():
 
     assert sin.trades.iloc[0]["entry_price"] == pytest.approx(105.0)
     assert con.trades.iloc[0]["entry_price"] == pytest.approx(110.0)
+
+
+# --- Direccion larga (docs/13) --------------------------------------------- #
+
+
+def _serie(n=300, semilla=5, deriva=0.0):
+    idx = pd.date_range("2020-01-01", periods=n, freq="D")
+    rng = np.random.default_rng(semilla)
+    precio = 100 * np.exp(np.cumsum(rng.normal(deriva, 0.02, n)))
+    p = pd.Series(precio, index=idx)
+    return pd.DataFrame({"open": p, "high": p * 1.015, "low": p * 0.985, "close": p}, index=idx)
+
+
+def test_largo_es_el_espejo_exacto_del_corto():
+    """Un LARGO sobre una serie == un CORTO sobre la misma serie reflejada.
+
+    Es la prueba mas fuerte que admite el motor direccional: si algun signo,
+    algun lado del rango o alguna prioridad de salida estuviera mal, las dos
+    curvas dejarian de coincidir. Comparar contra numeros escritos a mano solo
+    comprobaria que el error es consistente conmigo mismo.
+    """
+    df = _serie()
+    C = 200.0                                  # eje de reflexion: p' = 2C - p
+    espejo = pd.DataFrame({
+        "open": 2 * C - df["open"],
+        "high": 2 * C - df["low"],             # el maximo pasa a ser el minimo
+        "low": 2 * C - df["high"],
+        "close": 2 * C - df["close"],
+    }, index=df.index)
+
+    señales = pd.DataFrame({"entry": True, "atr": 2.0}, index=df.index)
+    # Sin tope de nocional y sin carry: el tope depende del NIVEL de precio, que
+    # la reflexion cambia, y el carry solo existe en corto. Dejarlos activos
+    # compararia dos cosas que no son espejo por motivos ajenos a la direccion.
+    costes = CostModel(commission_bps=0, slippage_bps=0, borrow_annual_pct=0.0)
+    base = dict(max_notional_pct=10.0, risk_per_trade=0.01, costs=costes)
+
+    largo = ShortBacktester(BacktestConfig(direccion=+1, **base)).run(df, señales)
+    corto = ShortBacktester(BacktestConfig(direccion=-1, **base)).run(espejo, señales)
+
+    assert len(largo.trades) == len(corto.trades) > 5
+    assert list(largo.trades["reason"]) == list(corto.trades["reason"])
+    np.testing.assert_allclose(largo.trades["r_multiple"], corto.trades["r_multiple"], atol=1e-9)
+
+
+def test_en_tendencia_alcista_el_largo_gana_y_el_corto_pierde():
+    df = _serie(semilla=11, deriva=0.004)      # deriva alcista clara
+    # El ATR tiene que escalar con el precio. Con uno fijo, al triplicarse el
+    # precio el stop queda a una fraccion de la volatilidad diaria y salta por
+    # ruido en las dos direcciones: la prueba mediria el tamaño del stop, no
+    # la direccion.
+    señales = pd.DataFrame({"entry": True, "atr": df["close"] * 0.02}, index=df.index)
+    base = dict(max_notional_pct=10.0, risk_per_trade=0.01)
+
+    largo = ShortBacktester(BacktestConfig(direccion=+1, **base)).run(df, señales)
+    corto = ShortBacktester(BacktestConfig(direccion=-1, **base)).run(df, señales)
+    assert largo.trades["r_multiple"].mean() > 0 > corto.trades["r_multiple"].mean()
+
+
+def test_el_largo_no_paga_carry_de_prestamo():
+    df = _serie(semilla=3)
+    señales = pd.DataFrame({"entry": True, "atr": 2.0}, index=df.index)
+    costes = CostModel(commission_bps=0, slippage_bps=0, borrow_annual_pct=50.0)
+    base = dict(max_notional_pct=10.0, costs=costes)
+    largo = ShortBacktester(BacktestConfig(direccion=+1, **base)).run(df, señales)
+    corto = ShortBacktester(BacktestConfig(direccion=-1, **base)).run(df, señales)
+    assert (largo.trades["borrow_cost"] == 0).all()
+    assert (corto.trades["borrow_cost"] > 0).all()

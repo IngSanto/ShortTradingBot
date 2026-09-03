@@ -58,7 +58,16 @@ class BacktestConfig:
     # normal (senal al cierre de t, entrada en la apertura de t+1). Subirlo
     # simula llegar tarde: feed con retraso, revision manual, ejecucion diferida.
     entry_delay_bars: int = 0
+    # -1 = corto (por defecto: es lo unico que el proyecto ha operado hasta
+    # ahora, y el valor por defecto garantiza que nada cambie de conducta).
+    # +1 = largo. Cambia donde va el stop, que lado del rango lo toca y el
+    # signo del P&L; el carry por prestamo solo existe en corto.
+    direccion: int = -1
     costs: CostModel = field(default_factory=CostModel)
+
+    @property
+    def es_largo(self) -> bool:
+        return self.direccion > 0
 
 
 @dataclass
@@ -153,17 +162,19 @@ class ShortBacktester:
             # --- 2) Gestionar la posicion viva dentro de la barra ---
             if pos is not None:
                 pos.bars_held += 1
-                exit_px, reason = self._resolve_exit(pos, i, opens, highs, lows, closes, exit_arr)
+                exit_px, reason = self._resolve_exit(pos, i, opens, highs, lows, closes,
+                                                     exit_arr, cfg.direccion)
                 if exit_px is not None:
                     equity, trade = self._close_position(
-                        pos, i, df.index, exit_px, reason, equity, side_cost, borrow_rate
+                        pos, i, df.index, exit_px, reason, equity, side_cost,
+                        borrow_rate, cfg.direccion
                     )
                     trades.append(trade)
                     pos = None
 
             # --- 3) Marcar equity (mark-to-market) y exposicion ---
             if pos is not None:
-                equity_curve[i] = equity + (pos.entry_price - closes[i]) * pos.qty
+                equity_curve[i] = equity + cfg.direccion * (closes[i] - pos.entry_price) * pos.qty
                 exposure[i] = (pos.qty * closes[i]) / max(equity, 1e-9)
             else:
                 equity_curve[i] = equity
@@ -209,28 +220,37 @@ class ShortBacktester:
         qty = min(qty, (equity * cfg.max_notional_pct) / open_px)
         if qty <= 0:
             return None
+        d = cfg.direccion
         return _Position(
             entry_idx=i,
             entry_price=open_px,
             qty=qty,
-            stop=open_px + pending["stop_atr"] * pending["atr"],
-            target=open_px - pending["target_atr"] * pending["atr"],
+            # El stop siempre va en contra de la posicion y el objetivo a
+            # favor: con d=-1 sale el corto de siempre; con d=+1 se invierten.
+            stop=open_px - d * pending["stop_atr"] * pending["atr"],
+            target=open_px + d * pending["target_atr"] * pending["atr"],
             max_bars=pending["max_bars"],
             risk_amount=qty * risk_per_unit,
             entry_fee=open_px * qty * side_cost,
         )
 
     @staticmethod
-    def _resolve_exit(pos, i, opens, highs, lows, closes, exit_arr):
-        """Prioridad: hueco > stop > objetivo > senal > tiempo."""
+    def _resolve_exit(pos, i, opens, highs, lows, closes, exit_arr, direccion=-1):
+        """Prioridad: hueco > stop > objetivo > senal > tiempo.
+
+        El orden de prioridad es el mismo en las dos direcciones; lo unico que
+        cambia es que extremo de la barra toca cada nivel. En corto el stop
+        esta arriba (lo toca el maximo) y en largo abajo (lo toca el minimo).
+        """
+        corto = direccion < 0
         if pos.bars_held > 1:                      # huecos solo tras la barra de entrada
-            if opens[i] >= pos.stop:
+            if (opens[i] >= pos.stop) if corto else (opens[i] <= pos.stop):
                 return opens[i], "gap_stop"
-            if opens[i] <= pos.target:
+            if (opens[i] <= pos.target) if corto else (opens[i] >= pos.target):
                 return opens[i], "gap_target"
-        if highs[i] >= pos.stop:
+        if (highs[i] >= pos.stop) if corto else (lows[i] <= pos.stop):
             return pos.stop, "stop"
-        if lows[i] <= pos.target:
+        if (lows[i] <= pos.target) if corto else (highs[i] >= pos.target):
             return pos.target, "target"
         if exit_arr[i]:
             return closes[i], "signal"
@@ -239,11 +259,14 @@ class ShortBacktester:
         return None, ""
 
     @staticmethod
-    def _close_position(pos, i, index, exit_px, reason, equity, side_cost, borrow_rate):
+    def _close_position(pos, i, index, exit_px, reason, equity, side_cost,
+                        borrow_rate, direccion=-1):
         exit_fee = exit_px * pos.qty * side_cost
         fees = pos.entry_fee + exit_fee
-        gross = (pos.entry_price - exit_px) * pos.qty
-        borrow_cost = borrow_rate * pos.entry_price * pos.qty * pos.bars_held
+        gross = direccion * (exit_px - pos.entry_price) * pos.qty
+        # El coste de prestamo solo lo paga quien vende algo que no tiene.
+        borrow_cost = (borrow_rate * pos.entry_price * pos.qty * pos.bars_held
+                       if direccion < 0 else 0.0)
         pnl = gross - fees - borrow_cost
         return equity + pnl, Trade(
             entry_date=index[pos.entry_idx],

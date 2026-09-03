@@ -38,6 +38,10 @@ class PosicionPapel:
     max_barras: int
     barras: int = 0
     riesgo: float = 0.0
+    # -1 corto, +1 largo. Va en la POSICION y no en la configuracion porque
+    # una misma cartera puede llevar las dos a la vez; el valor por defecto
+    # mantiene validos los estados guardados antes de que esto existiera.
+    direccion: int = -1
 
 
 @dataclass
@@ -158,17 +162,21 @@ class PaperBroker:
             pos = PosicionPapel(**d)
             pos.barras += 1
 
-            # Mismo orden de prioridad que el backtest: hueco > stop > objetivo > tiempo.
+            # Mismo orden de prioridad que el backtest: hueco > stop > objetivo
+            # > tiempo. Lo unico que cambia con la direccion es que extremo de
+            # la barra toca cada nivel: en corto el stop esta arriba y lo toca
+            # el maximo; en largo esta abajo y lo toca el minimo.
             o, h, l, c = (float(df["open"].iloc[i]), float(df["high"].iloc[i]),
                           float(df["low"].iloc[i]), float(df["close"].iloc[i]))
+            corto = pos.direccion < 0
             salida, motivo = None, ""
-            if pos.barras > 1 and o >= pos.stop:
+            if pos.barras > 1 and ((o >= pos.stop) if corto else (o <= pos.stop)):
                 salida, motivo = o, "gap_stop"
-            elif pos.barras > 1 and o <= pos.objetivo:
+            elif pos.barras > 1 and ((o <= pos.objetivo) if corto else (o >= pos.objetivo)):
                 salida, motivo = o, "gap_target"
-            elif h >= pos.stop:
+            elif (h >= pos.stop) if corto else (l <= pos.stop):
                 salida, motivo = pos.stop, "stop"
-            elif l <= pos.objetivo:
+            elif (l <= pos.objetivo) if corto else (h >= pos.objetivo):
                 salida, motivo = pos.objetivo, "target"
             elif pos.barras >= pos.max_barras:
                 salida, motivo = c, "time"
@@ -178,8 +186,10 @@ class PaperBroker:
 
             coste = cfg.costs.side_cost
             comisiones = (pos.precio_entrada + salida) * pos.cantidad * coste
-            carry = cfg.costs.borrow_per_period * pos.precio_entrada * pos.cantidad * pos.barras
-            pnl = (pos.precio_entrada - salida) * pos.cantidad - comisiones - carry
+            # El prestamo solo lo paga quien vende algo que no tiene.
+            carry = (cfg.costs.borrow_per_period * pos.precio_entrada * pos.cantidad * pos.barras
+                     if pos.direccion < 0 else 0.0)
+            pnl = pos.direccion * (salida - pos.precio_entrada) * pos.cantidad - comisiones - carry
             estado.equity += pnl
             estado.cerradas.append(asdict(OperacionPapel(
                 estrategia=pos.estrategia, simbolo=pos.simbolo,
@@ -213,19 +223,20 @@ class PaperBroker:
                            (estado.equity * cfg.max_notional_pct) / apertura)
             if cantidad <= 0:
                 continue
+            d = int(p.get("direccion", -1))
             estado.abiertas.append(asdict(PosicionPapel(
                 estrategia=p["estrategia"], simbolo=p["simbolo"],
                 fecha_senal=p["fecha_senal"], fecha_entrada=str(df.index[i]),
                 precio_entrada=apertura, cantidad=cantidad,
-                stop=apertura + p["stop_atr"] * p["atr"],
-                objetivo=apertura - p["target_atr"] * p["atr"],
+                stop=apertura - d * p["stop_atr"] * p["atr"],
+                objetivo=apertura + d * p["target_atr"] * p["atr"],
                 max_barras=p["max_bars"], barras=0,
-                riesgo=cantidad * riesgo_unidad)))
+                riesgo=cantidad * riesgo_unidad, direccion=d)))
             log.append(f"  ENTRADA {p['simbolo']} corto a {apertura:.4f} "
                        f"(stop {apertura + p['stop_atr'] * p['atr']:.4f})")
         estado.pendientes = quedan
 
-    def _nuevas_senales(self, estado, clave, senales, df, i, log):
+    def _nuevas_senales(self, estado, clave, senales, df, i, log, direccion=-1):
         cfg = self.config
         fila = senales.iloc[i]
         if not bool(fila.get("entry", False)):
@@ -245,6 +256,7 @@ class PaperBroker:
             "target_atr": float(fila.get("target_atr", cfg.default_target_atr)),
             "max_bars": int(fila.get("max_bars", cfg.default_max_bars)),
             "espera": cfg.entry_delay_bars,
+            "direccion": int(direccion),
         })
         log.append(f"  SEÑAL {simbolo} el {df.index[i].date()} "
                    f"-> entrada en la proxima apertura")

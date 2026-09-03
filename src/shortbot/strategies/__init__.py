@@ -10,6 +10,7 @@ from .crypto import (
     OpenInterestDeleverageShort,
     OpenInterestFlushShort,
 )
+from .largas import PullbackToEMALong, SqueezeBreakoutLong
 from .propia import CompressedTrendShort
 from .mean_reversion import (
     BollingerUpperFade,
@@ -39,6 +40,9 @@ STRATEGY_REGISTRY: dict[str, type[Strategy]] = {
     "funding_fade_short": FundingFadeShort,
     "oi_flush_short": OpenInterestFlushShort,
     "oi_deleverage_short": OpenInterestDeleverageShort,
+    # Familia espejo: mismas reglas en largo (docs/13-pata-larga.md).
+    "pullback_to_ema_long": PullbackToEMALong,
+    "squeeze_breakout_long": SqueezeBreakoutLong,
     # Teoria propia (docs/04-teoria-propia.md).
     "cbrc_short": CompressedTrendShort,
 }
