@@ -1,4 +1,11 @@
-# `oi_flush_short`: desapalancamiento forzado como señal de continuación
+# `oi_deleverage_short`: desapalancamiento forzado como señal de continuación
+
+> **Corrección hecha antes de calibrar.** Este documento se escribió titulado
+> `oi_flush_short`, hasta descubrir que ese nombre ya existe en el registro
+> (`OpenInterestFlushShort`, en `strategies/crypto.py`) y corresponde a una
+> hipótesis **distinta**: interés abierto que *creció* con el precio y luego
+> rompe un mínimo. Eso es un estado acumulado más un disparador; esto es un
+> proceso en curso. Ver la sección 0.1 para qué se hace con las dos.
 
 **Estado: PRE-REGISTRADO, sin calibrar.** Las secciones 0 a 5 se escriben
 antes de mirar un solo resultado. La sección 6 se rellena después, gane o
@@ -33,6 +40,28 @@ correlacionados al 0,561 son 1,7 apuestas independientes. Una estrategia
 nueva solo acerca al objetivo si mueve **esa** cifra. Eso cambia el criterio
 de éxito, y por eso la sección 5 es distinta a la de cualquier estrategia
 anterior del catálogo.
+
+### 0.1 Las dos hipótesis de interés abierto, y por qué se prueban las dos
+
+`oi_flush_short` lleva escrito en el registro desde antes de que existieran
+los datos, con sus parámetros ya fijados en código. Nunca se ha ejecutado
+porque requería una columna `open_interest` que el proyecto no tenía. Eso lo
+convierte, sin pretenderlo, en el pre-registro más limpio del catálogo: su
+especificación es anterior al dato.
+
+Se evalúa **tal cual está escrito**, sin tocar un parámetro. Es una sola
+comparación y cero calibración.
+
+`oi_deleverage_short` es la hipótesis nueva de este documento. Son mecanismos
+distintos y opuestos en el tiempo: uno dispara cuando el apalancamiento
+**se ha acumulado** y algo lo rompe; el otro cuando **se está destruyendo**.
+
+**Consecuencia contable, asumida ahora:** el catálogo pasa de K=12 a K=14
+estrategias probadas, así que el umbral de Bonferroni sube de **2,865 a
+2,914**. Se aplica el nuevo a las dos, y también se deja anotado que las
+estrategias ya admitidas se juzgaron con el umbral de su momento — sus t
+(5,85 y 5,12) superan el nuevo con holgura, así que la corrección no cambia
+ninguna decisión pasada.
 
 ## 1. La distinción que hace la hipótesis: estado contra proceso
 
@@ -78,9 +107,9 @@ estrategias anteriores y no se abre una dimensión de búsqueda nueva.
 
 - Percentil `p` del desplome de interés abierto: **{5%, 10%, 20%}**.
 
-Tres celdas. La rejilla es deliberadamente diminuta: con doce estrategias ya
-probadas, el umbral de significancia corregido es t ≥ 2,87, y cada parámetro
-extra que se explora lo encarece.
+Tres celdas. La rejilla es deliberadamente diminuta: con catorce estrategias
+probadas, el umbral corregido es t ≥ 2,914, y cada parámetro extra que se
+explora lo encarece.
 
 **Fijo, no se calibra:**
 
@@ -123,7 +152,8 @@ objetivo.
 
 **Nivel 1 — admisión al catálogo** (puertas de `docs/02`, sin cambios):
 
-1. t ≥ **2,87** sobre el conjunto de diseño (Bonferroni para K=12).
+1. t ≥ **2,914** sobre el conjunto de diseño (Bonferroni para K=14,
+   ver 0.1).
 2. Expectativa positiva en ≥ **50%** de los activos.
 3. **Meseta**: al menos 2 de las 3 celdas del percentil cumplen, no una
    suelta.

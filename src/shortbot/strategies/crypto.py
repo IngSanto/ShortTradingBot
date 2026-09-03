@@ -135,3 +135,60 @@ class OpenInterestFlushShort(Strategy):
             target_atr=p["target_atr"],
             max_bars=p["max_bars"],
         )
+
+
+class OpenInterestDeleverageShort(Strategy):
+    """Corto cuando el apalancamiento se esta destruyendo, no cuando se acumula.
+
+    La diferencia con ``OpenInterestFlushShort`` -que mira interes abierto
+    acumulandose y luego una rotura- es de tiempo verbal: aquella busca un
+    estado ya formado, esta busca un proceso en marcha.
+
+    Reglas (docs/12-oi-flush-short.md, seccion 2):
+      1. La variacion diaria del interes abierto esta en su percentil inferior
+         de las ultimas ``rank_lookback`` barras: se estan cerrando posiciones
+         en masa.
+      2. El precio cae ese mismo dia (``close < open``). Sin esta condicion la
+         señal mezcla dos causas opuestas: interes abierto cayendo con el
+         precio SUBIENDO son cortos cubriendo, que es el proceso contrario.
+
+    Requiere la columna ``open_interest``. Sin ella no genera señales, igual
+    que ``FundingFadeShort`` sin funding: aproximarla con el precio seria
+    inventar justo la parte que hace distinta a la hipotesis.
+    """
+
+    def __init__(self, **params):
+        super().__init__(
+            name="oi_deleverage_short",
+            family="cripto",
+            thesis="Liquidacion forzada en curso: la cola de liquidaciones no se vacia dentro de la barra.",
+            params={
+                "percentile": 0.10,
+                "rank_lookback": 180,
+                "atr_period": 14,
+                "stop_atr": 2.0,
+                "target_atr": 3.0,
+                "max_bars": 10,
+                **params,
+            },
+        )
+
+    def _signals(self, df: pd.DataFrame, benchmark: Optional[pd.Series]) -> pd.DataFrame:
+        p = self.params
+        a = ind.atr(df, p["atr_period"])
+        if "open_interest" not in df.columns:
+            return frame(df.index, entry=False, atr=a)
+
+        cambio = df["open_interest"].pct_change()
+        rango = cambio.rolling(p["rank_lookback"], min_periods=p["rank_lookback"]).rank(pct=True)
+        desplome = (rango <= p["percentile"]).fillna(False)
+        precio_cae = df["close"] < df["open"]
+
+        return frame(
+            df.index,
+            entry=desplome & precio_cae,
+            atr=a,
+            stop_atr=p["stop_atr"],
+            target_atr=p["target_atr"],
+            max_bars=p["max_bars"],
+        )

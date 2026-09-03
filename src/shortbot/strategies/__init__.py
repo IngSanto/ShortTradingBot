@@ -5,7 +5,11 @@ de la fase de laboratorio es *descartar* la mayoria.
 """
 
 from .base import Strategy
-from .crypto import FundingFadeShort, OpenInterestFlushShort
+from .crypto import (
+    FundingFadeShort,
+    OpenInterestDeleverageShort,
+    OpenInterestFlushShort,
+)
 from .propia import CompressedTrendShort
 from .mean_reversion import (
     BollingerUpperFade,
@@ -34,6 +38,7 @@ STRATEGY_REGISTRY: dict[str, type[Strategy]] = {
     # Familia cripto: requieren funding / open interest en el DataFrame.
     "funding_fade_short": FundingFadeShort,
     "oi_flush_short": OpenInterestFlushShort,
+    "oi_deleverage_short": OpenInterestDeleverageShort,
     # Teoria propia (docs/04-teoria-propia.md).
     "cbrc_short": CompressedTrendShort,
 }
