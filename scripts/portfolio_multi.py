@@ -55,7 +55,12 @@ LARGAS = {"pullback_to_ema_long", "squeeze_breakout_long"}
 
 CARPETA = {"cripto": "data/cripto/*_1d.csv",
            "acciones": "data/acciones/*.csv",
-           "futuros": "data/futuros/*.csv"}
+           "futuros": "data/futuros/*.csv",
+           "diversificado": "data/diversificado/*.csv"}
+
+# El universo diversificado son ETF cotizados en EEUU: usan el mismo perfil de
+# costes que las acciones. Inventarle uno propio seria fingir precision.
+PERFIL_COSTES = {"diversificado": "acciones"}
 
 
 def cargar_mercado(mercado: str, conjunto: str, desde: str | None = None) -> dict[str, pd.DataFrame]:
@@ -75,7 +80,7 @@ def simular(mercados: list[str], estrategias: list[str], conjunto: str,
             riesgo: float, retraso: int, desde: str | None = None) -> tuple[EstadoPapel, dict]:
     trabajo, brokers, fechas = [], {}, pd.DatetimeIndex([])
     for mercado in mercados:
-        cfg = get_market(mercado).config(risk_per_trade=riesgo, entry_delay_bars=retraso)
+        cfg = get_market(PERFIL_COSTES.get(mercado, mercado)).config(risk_per_trade=riesgo, entry_delay_bars=retraso)
         brokers[mercado] = PaperBroker(cfg)
         for simbolo, df in cargar_mercado(mercado, conjunto, desde).items():
             fechas = fechas.union(df.index)
@@ -118,7 +123,7 @@ def informe(titulo: str, m: dict, extra: dict | None = None) -> None:
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--mercados", nargs="+", default=["cripto"],
-                   choices=["cripto", "acciones", "futuros"])
+                   choices=["cripto", "acciones", "futuros", "diversificado"])
     p.add_argument("--estrategias", nargs="+",
                    default=["pullback_to_ema_short", "squeeze_breakdown"])
     p.add_argument("--conjunto", choices=["diseno", "reserva", "todo"], default="todo")

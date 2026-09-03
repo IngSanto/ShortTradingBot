@@ -22,6 +22,10 @@ data/**
 # sigue siendo el que produjo esos resultados.
 !data/eventos/
 !data/eventos/*.csv
+# El universo diversificado se versiona (3 MB): es la referencia contra la que
+# se mide todo lo demas en docs/14, y sin el esos numeros no se reproducen.
+!data/diversificado/
+!data/diversificado/*.csv
 
 # El estado del paper trading se versiona: es el registro de la puerta 4 y su
 # valor está en que no se pueda rehacer.
