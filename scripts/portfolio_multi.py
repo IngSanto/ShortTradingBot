@@ -58,12 +58,13 @@ CARPETA = {"cripto": "data/cripto/*_1d.csv",
            "futuros": "data/futuros/*.csv"}
 
 
-def cargar_mercado(mercado: str, conjunto: str) -> dict[str, pd.DataFrame]:
+def cargar_mercado(mercado: str, conjunto: str, desde: str | None = None) -> dict[str, pd.DataFrame]:
     rutas = sorted(glob.glob(os.path.join(RAIZ, CARPETA[mercado])))
     activos = {}
     for r in rutas:
         s = os.path.basename(r).replace("_1d.csv", "").replace(".csv", "")
-        activos[s] = load_csv(r)
+        d = load_csv(r)
+        activos[s] = d.loc[desde:] if desde else d
     if mercado == "cripto" and conjunto != "todo":
         split = json.load(open(os.path.join(RAIZ, "config", "holdout_split.json")))
         activos = {s: d for s, d in activos.items() if s in set(split[conjunto])}
@@ -71,12 +72,12 @@ def cargar_mercado(mercado: str, conjunto: str) -> dict[str, pd.DataFrame]:
 
 
 def simular(mercados: list[str], estrategias: list[str], conjunto: str,
-            riesgo: float, retraso: int) -> tuple[EstadoPapel, dict]:
+            riesgo: float, retraso: int, desde: str | None = None) -> tuple[EstadoPapel, dict]:
     trabajo, brokers, fechas = [], {}, pd.DatetimeIndex([])
     for mercado in mercados:
         cfg = get_market(mercado).config(risk_per_trade=riesgo, entry_delay_bars=retraso)
         brokers[mercado] = PaperBroker(cfg)
-        for simbolo, df in cargar_mercado(mercado, conjunto).items():
+        for simbolo, df in cargar_mercado(mercado, conjunto, desde).items():
             fechas = fechas.union(df.index)
             for nombre in estrategias:
                 sig = build(nombre).generate_signals(df, None)
@@ -123,6 +124,9 @@ def main() -> int:
     p.add_argument("--conjunto", choices=["diseno", "reserva", "todo"], default="todo")
     p.add_argument("--riesgo", type=float, default=0.01)
     p.add_argument("--retraso", type=int, default=0)
+    p.add_argument("--desde", default=None,
+                   help="recorta el histórico: sin esto, cripto (2020-) y acciones "
+                        "(2010-) cubren periodos distintos y no son comparables")
     p.add_argument("--por-separado", action="store_true",
                    help="ademas de la cartera, cada estrategia en solitario")
     args = p.parse_args()
@@ -134,11 +138,12 @@ def main() -> int:
 
     if args.por_separado:
         for e in args.estrategias:
-            estado, extra = simular(args.mercados, [e], args.conjunto, args.riesgo, args.retraso)
+            estado, extra = simular(args.mercados, [e], args.conjunto, args.riesgo,
+                                    args.retraso, args.desde)
             informe(f"[solo] {e}", metricas(estado), extra)
 
     estado, extra = simular(args.mercados, args.estrategias, args.conjunto,
-                            args.riesgo, args.retraso)
+                            args.riesgo, args.retraso, args.desde)
     informe(f"[CARTERA] {len(args.estrategias)} estrategias x {len(args.mercados)} mercados",
             metricas(estado), extra)
     return 0
