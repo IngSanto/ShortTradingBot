@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "actualizado": "2026-08-31",
+  "actualizado": "2026-09-03",
   "criterio_admision": {
     "puertas": "1, 2, 2.5 y 3 de docs/02-metodologia-validacion.md",
     "t_minimo": 2.87,
@@ -181,6 +181,19 @@
       "resultado": "El mecanismo SI reduce el riesgo de cola correlacionado (dias con >=2 stops simultaneos bajan de 110 a 87-102 en las 10 combinaciones de la rejilla), pero squeeze_breakdown pierde 20%-55% de expectativa en TODA la rejilla -no cumple el criterio en ninguna combinacion. Verificado el mecanismo directamente: los trades vetados de squeeze_breakdown rinden 4x mejor (E[R] +0,244) que los conservados (+0,059). La misma volatilidad de mercado que dispara la amplitud es la fuente del edge de esa estrategia -el veto no separa riesgo de ventaja para ella. pullback_to_ema_short si cumple ampliamente en solitario, pero el criterio exige ambas estrategias a la vez.",
       "lead_no_perseguido": "Ninguno: el mecanismo mismo explica por que un veto agregado universal no puede servir a una estrategia que depende de la volatilidad que el filtro trata de evitar. Aplicarlo solo a pullback_to_ema_short seria otra hipotesis, no una calibracion de parametros.",
       "referencia": "docs/08-filtro-agregado.md"
+    },
+    {
+      "id": "filtro_eventos_macro",
+      "fecha": "2026-09-03",
+      "estado": "ADOPTADO",
+      "ventana": "V1 {T-1, T}: se veta la entrada que caeria la vispera o el mismo dia del evento",
+      "mecanismo": "Veto universal (todos los activos y estrategias) de entradas NUEVAS cuya barra de ENTRADA -no la de senal- cae en la ventana de una fecha de decision del FOMC o de publicacion del IPC de EEUU. Nunca cierra posiciones abiertas.",
+      "resultado": "Cumple el criterio pre-registrado en 4 de 5 ventanas en el conjunto de diseno. Reduce la cola correlacionada de forma replicada: dias con >=2 stops simultaneos 115->97 en diseno y 79->64 en la reserva. En squeeze_breakdown el efecto replica casi exacto fuera de muestra (-0,350 R en diseno, -0,346 R en reserva, p=0,022) y su E[R] sube +27% / +30%. En pullback_to_ema_short NO replica (-0,310 R en diseno pero -0,107 R con p=0,45 en reserva): cumple el criterio y aporta a la reduccion de cola, pero sin efecto de expectativa demostrable.",
+      "por_que_funciona_donde_docs08_fallo": "El instrumento no mira el mercado. La amplitud de funding de docs/08 medía la volatilidad de la que squeeze_breakdown vive, asi que el veto le quitaba sus mejores operaciones. Una fecha de FOMC no contiene informacion sobre si el mercado esta comprimido o rompiendo, y por eso separa riesgo de ventaja donde la amplitud no podia.",
+      "coste": "~10% de las operaciones. Anade la dependencia del calendario macro, que SI es operable: federalreserve.gov y bls.gov son alcanzables desde el runner (docs/09).",
+      "look_ahead": "3 de 132 eventos no eran conocidos de antemano (FOMC de emergencia 2020-03-15; IPC desplazados por el cierre de 2025). Reejecutado sin ellos, el resultado no cambia.",
+      "pendiente": "No esta conectado al paper trading todavia: adoptarlo en el registro y activarlo en la operativa diaria son dos decisiones distintas.",
+      "referencia": "docs/10-filtro-eventos-macro.md"
     }
   ]
 }

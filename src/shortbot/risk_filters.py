@@ -54,6 +54,38 @@ def amplitud_aglomeracion(universo: dict[str, pd.DataFrame], lookback: int = 90,
     return tabla.mean(axis=1, skipna=True)
 
 
+def ventana_eventos(index: pd.DatetimeIndex, fechas, dias_antes: int,
+                    dias_despues: int) -> pd.Series:
+    """True en las barras que caen a [-dias_antes, +dias_despues] de un evento.
+
+    La ventana se expande en dias de CALENDARIO, no en posiciones del indice:
+    asi sigue significando lo mismo si al indice le falta una barra.
+    """
+    eventos = pd.DatetimeIndex(pd.to_datetime(list(fechas))).normalize()
+    dias = {f + pd.Timedelta(days=d)
+            for f in eventos
+            for d in range(-dias_antes, dias_despues + 1)}
+    return pd.Series(index.normalize().isin(dias), index=index)
+
+
+def veto_evento_macro(index: pd.DatetimeIndex, fechas, dias_antes: int,
+                      dias_despues: int, retraso_entrada: int = 0) -> pd.Series:
+    """Veto de eventos macro, devuelto sobre la fila de SEÑAL (docs/10, seccion 1.1).
+
+    Lo que se quiere evitar es tener la posicion ABIERTA durante el evento,
+    y la entrada no ocurre en la barra de la senal: una senal en `i` se
+    ejecuta en la apertura de `i + 1 + retraso_entrada` (backtest y paper
+    comparten esta regla). Por eso la ventana se desplaza hacia atras esas
+    barras antes de aplicarla.
+
+    Devolver la ventana sin desplazar seria un error silencioso: vetaria
+    entradas que caen justo FUERA del evento y dejaria pasar las que caen
+    dentro -es decir, lo contrario de lo que dice hacer, sin fallar nunca.
+    """
+    ventana = ventana_eventos(index, fechas, dias_antes, dias_despues)
+    return ventana.shift(-(1 + retraso_entrada), fill_value=False).astype(bool)
+
+
 def veto_amplitud_mercado(amplitud: pd.Series, umbral: float) -> pd.Series:
     """True los dias donde la amplitud de aglomeracion supera `umbral`.
 

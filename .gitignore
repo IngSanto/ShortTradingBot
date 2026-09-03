@@ -17,6 +17,11 @@ data/**
 # reproducir exactamente sobre qué precios se tomó cada decisión.
 !data/cripto/
 !data/cripto/*_1d.csv
+# El calendario macro se versiona: es pequeño y sin el la calibracion de
+# docs/10 no es reproducible -si manana la Fed reorganiza su web, este CSV
+# sigue siendo el que produjo esos resultados.
+!data/eventos/
+!data/eventos/*.csv
 
 # El estado del paper trading se versiona: es el registro de la puerta 4 y su
 # valor está en que no se pueda rehacer.

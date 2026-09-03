@@ -10,6 +10,8 @@ import pandas as pd
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from shortbot.risk_filters import (
+    ventana_eventos,
+    veto_evento_macro,
     aplicar_veto,
     amplitud_aglomeracion,
     veto_amplitud_mercado,
@@ -82,3 +84,61 @@ def test_veto_amplitud_mercado_es_universal_no_selectivo():
     signals = pd.DataFrame({"entry": [True] * 10, "atr": 1.0}, index=idx)
     out = aplicar_veto(signals, df_cualquiera, veto)
     assert not out["entry"].any()
+
+
+# --- Filtro de eventos macro (docs/10) ------------------------------------- #
+
+
+def test_ventana_eventos_se_expande_en_dias_de_calendario():
+    idx = pd.date_range("2026-01-01", periods=20, freq="D")
+    v = ventana_eventos(idx, ["2026-01-10"], dias_antes=1, dias_despues=1)
+    assert list(idx[v].strftime("%Y-%m-%d")) == ["2026-01-09", "2026-01-10", "2026-01-11"]
+
+
+def test_ventana_eventos_ignora_eventos_fuera_del_indice():
+    idx = pd.date_range("2026-01-01", periods=5, freq="D")
+    v = ventana_eventos(idx, ["2030-06-01"], dias_antes=2, dias_despues=2)
+    assert not v.any()
+
+
+def test_veto_macro_se_desplaza_con_el_retraso_de_entrada():
+    """El veto va sobre la señal, pero apunta a donde caeria la ENTRADA."""
+    idx = pd.date_range("2026-01-01", periods=20, freq="D")
+    ventana = ventana_eventos(idx, ["2026-01-10"], 0, 0)
+
+    # Sin retraso: la senal de i entra en i+1, asi que se veta la vispera.
+    v0 = veto_evento_macro(idx, ["2026-01-10"], 0, 0, retraso_entrada=0)
+    assert list(idx[v0].strftime("%Y-%m-%d")) == ["2026-01-09"]
+
+    # Con un dia de retraso (el del paper diario), dos barras antes.
+    v1 = veto_evento_macro(idx, ["2026-01-10"], 0, 0, retraso_entrada=1)
+    assert list(idx[v1].strftime("%Y-%m-%d")) == ["2026-01-08"]
+
+    # Y en ningun caso coincide con la ventana sin desplazar: si coincidiera,
+    # el filtro estaria vetando el dia equivocado sin dar ningun error.
+    assert not (v0 & ventana).any()
+
+
+def test_ninguna_entrada_cae_dentro_de_la_ventana_de_evento():
+    """La prueba que de verdad importa: se corre el backtest y se comprueba
+    que no queda ni una entrada dentro de la ventana. Un desplazamiento mal
+    puesto no rompe nada -solo protege los dias equivocados-, asi que se
+    verifica contra el motor real, no contra la aritmetica del veto."""
+    from shortbot.backtest import BacktestConfig, ShortBacktester
+
+    idx = pd.date_range("2026-01-01", periods=120, freq="D")
+    rng = np.random.default_rng(11)
+    precio = pd.Series(100 * np.exp(np.cumsum(rng.normal(0, 0.02, 120))), index=idx)
+    df = pd.DataFrame({"open": precio, "high": precio * 1.02,
+                       "low": precio * 0.98, "close": precio}, index=idx)
+    señales = pd.DataFrame({"entry": True, "atr": 2.0}, index=idx)
+    eventos = ["2026-01-20", "2026-02-15", "2026-03-10"]
+
+    for retraso in (0, 1, 2):
+        cfg = BacktestConfig(entry_delay_bars=retraso)
+        veto = veto_evento_macro(idx, eventos, 1, 1, retraso_entrada=retraso)
+        res = ShortBacktester(cfg).run(df, aplicar_veto(señales, df, veto))
+        ventana = ventana_eventos(idx, eventos, 1, 1)
+        prohibidas = set(idx[ventana])
+        assert not res.trades.empty, "sin operaciones no se prueba nada"
+        assert not set(res.trades["entry_date"]) & prohibidas, f"retraso={retraso}"
