@@ -32,6 +32,7 @@ import io
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.request
 import zipfile
@@ -50,12 +51,29 @@ COLUMNAS = ["sum_open_interest", "sum_open_interest_value",
 INICIO_ARCHIVO = "2020-09-01"  # primer dia que publica Binance
 
 
-def un_dia(simbolo: str, dia: str) -> pd.Series | None:
-    """Una fila diaria, o None si ese dia no existe (activo aun no listado)."""
-    try:
-        with urllib.request.urlopen(URL.format(s=simbolo, d=dia), timeout=30) as r:
-            crudo = r.read()
-    except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError):
+def un_dia(simbolo: str, dia: str, intentos: int = 4) -> pd.Series | None:
+    """Una fila diaria, o None si ese dia no existe (activo aun no listado).
+
+    Hay que distinguir dos "no hay dato" que se parecen y no son lo mismo:
+    un 404 significa que el activo no cotizaba ese dia y no volvera a existir
+    por mucho que se reintente; una conexion cortada es el servidor
+    protegiendose de nuestra propia concurrencia, y ahi rendirse perderia
+    dias que SI existen -en silencio, dejando huecos que luego pareceran
+    ausencia de mercado.
+    """
+    crudo = None
+    for intento in range(intentos):
+        try:
+            with urllib.request.urlopen(URL.format(s=simbolo, d=dia), timeout=30) as r:
+                crudo = r.read()
+            break
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                return None
+            time.sleep(2 ** intento)
+        except Exception:  # noqa: BLE001 - conexion cortada, DNS, timeout...
+            time.sleep(2 ** intento)
+    if crudo is None:
         return None
     try:
         with zipfile.ZipFile(io.BytesIO(crudo)) as z:
