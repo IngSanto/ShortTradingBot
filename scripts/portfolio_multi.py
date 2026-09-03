@@ -114,8 +114,9 @@ def informe(titulo: str, m: dict, extra: dict | None = None) -> None:
     print(f"  CAGR              {m['cagr']:+.1%}   (total {m['retorno_total']:+.1%} "
           f"en {m['años']:.1f} años)")
     print(f"  Max drawdown      {m['max_drawdown']:+.1%}")
-    print(f"  Sharpe            {m['sharpe']:.2f}   -> techo de Kelly "
-          f"{m['sharpe']**2/2:.1%} anual")
+    techo = (f"techo de Kelly {m['sharpe']**2/2:.1%} anual" if m["sharpe"] > 0
+             else "sin techo que calcular: con Sharpe negativo no hay tamaño que salve la cartera")
+    print(f"  Sharpe            {m['sharpe']:.2f}   -> {techo}")
     print(f"  Operaciones       {m['operaciones']:,} ({m['ops_por_año']:.0f}/año)  "
           f"E[R]={m['expectancy_r']:+.3f}  acierto={m['acierto']:.1%}")
 
