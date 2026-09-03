@@ -178,3 +178,21 @@ def synthetic_perp_universe(n_assets: int = 6, **kwargs) -> dict[str, pd.DataFra
     symbols = ["BTC", "ETH", "SOL", "BNB", "XRP", "DOGE", "AVAX", "LINK"]
     return {symbols[i % len(symbols)]: synthetic_perp(seed=200 + i, **kwargs)
             for i in range(n_assets)}
+
+
+def cargar_open_interest(path: str) -> pd.Series:
+    """Serie diaria de interes abierto, con los ceros tratados como AUSENCIA.
+
+    Un perpetuo con interes abierto exactamente cero no existe: significa que
+    Binance no publico el dato ese dia (el 7-mar-2022 fallo para todo el
+    mercado a la vez) o que el contrato estaba suspendido.
+
+    La distincion no es cosmetica. Un cero leido como valor real produce una
+    caida del -100% en la variacion diaria, que es justo la señal extrema que
+    busca ``oi_deleverage_short``: sin esta regla la estrategia dispararia en
+    todos los activos a la vez por un fallo de fichero, y lo haria con la
+    señal mas fuerte posible. Un NaN, en cambio, no genera entrada.
+    """
+    d = pd.read_csv(path, parse_dates=["fecha"]).set_index("fecha").sort_index()
+    oi = pd.to_numeric(d["sum_open_interest_cierre"], errors="coerce")
+    return oi.where(oi > 0)
