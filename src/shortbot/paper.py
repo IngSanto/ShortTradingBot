@@ -85,11 +85,34 @@ class EstadoPapel:
         return cls(creado=datetime.now(timezone.utc).isoformat(timespec="seconds"),
                    equity_inicial=equity_inicial, equity=equity_inicial)
 
-    def registrar_snapshot(self, fecha: str) -> None:
-        """Añade (o reemplaza, si ya corrió hoy) la foto del día en curso."""
+    def registrar_snapshot(self, fecha: str, precios: dict[str, float] | None = None) -> None:
+        """Añade (o reemplaza, si ya corrió hoy) la foto del día en curso.
+
+        `equity` es solo lo REALIZADO: se actualiza al cerrar una posición. Es
+        lo correcto para dimensionar -no se arriesga sobre beneficio que aún no
+        se ha cobrado- pero como curva miente: no se mueve mientras hay
+        posiciones abiertas perdiendo y salta el día que cierran. Medir
+        volatilidad, drawdown o correlación sobre esa escalera da números que
+        no corresponden al valor real de la cuenta.
+
+        Por eso se guarda además `equity_mercado`, que suma el no realizado de
+        lo que sigue abierto. Es la cifra que un broker mostraría, y la única
+        con la que las métricas de riesgo significan algo.
+        """
+        no_realizado = 0.0
+        if precios:
+            for d in self.abiertas:
+                px = precios.get(d["simbolo"])
+                if px is None:
+                    continue
+                # En corto se gana cuando el precio baja: de ahí el signo.
+                direccion = int(d.get("direccion", -1))
+                no_realizado += direccion * (px - d["precio_entrada"]) * d["cantidad"]
         punto = {
             "fecha": fecha,
             "equity": self.equity,
+            "equity_mercado": self.equity + no_realizado,
+            "no_realizado": no_realizado,
             "operaciones_cerradas": len(self.cerradas),
             "operaciones_abiertas": len(self.abiertas),
         }

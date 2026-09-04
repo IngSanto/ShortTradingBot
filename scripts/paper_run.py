@@ -144,11 +144,18 @@ def main() -> int:
         print()
 
     log_total = []
+    # Ultimo cierre de cada activo, para valorar a mercado lo que quede abierto.
+    # Sin esto la curva diaria solo refleja lo realizado y no se mueve mientras
+    # hay posiciones vivas, que es como mirar el saldo del banco ignorando lo
+    # que tienes invertido.
+    ultimos_precios: dict[str, float] = {}
     for entrada in aprobadas:
         est = build(entrada["id"], **entrada.get("parametros", {}))
         for path, _ in vivos:
             simbolo = os.path.basename(path).split("_")[0]
-            log = broker.procesar(estado, est, simbolo, load_csv(path))
+            df = load_csv(path)
+            ultimos_precios[simbolo] = float(df["close"].iloc[-1])
+            log = broker.procesar(estado, est, simbolo, df)
             log_total += log
 
     for linea in log_total:
@@ -156,7 +163,8 @@ def main() -> int:
     if not log_total:
         print("Sin barras nuevas que procesar.")
 
-    estado.registrar_snapshot(pd.Timestamp.now("UTC").strftime("%Y-%m-%d"))
+    estado.registrar_snapshot(pd.Timestamp.now("UTC").strftime("%Y-%m-%d"),
+                              ultimos_precios)
     estado.guardar(ESTADO)
     informe(estado, catalogo)
     print(f"Estado guardado en {os.path.relpath(ESTADO, RAIZ)}. "

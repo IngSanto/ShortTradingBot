@@ -112,7 +112,93 @@ Con el núcleo realista y costes de rebalanceo mensual:
 La mezcla sigue batiendo a las dos patas por separado y sigue partiendo el
 drawdown por la mitad. **El mecanismo aguanta la auditoría; la magnitud no.**
 
-## 7. Qué falta por saber, y no se puede saber con backtest
+## 7. Segunda ronda: el error más grave, encontrado al revisar otra vez
+
+`paper.py` actualiza `estado.equity` **solo al cerrar** una posición, y el
+historial diario guarda ese valor. La curva resultante es una escalera: **el
+67,3% de los días no se movía** aunque hubiera veinte posiciones vivas.
+
+Todas las métricas de riesgo se calcularon sobre esa escalera. Reconstruida
+la curva correcta —realizado más no realizado de lo abierto, que es lo que un
+broker muestra— los números cambian, y esta vez **a favor**:
+
+| | Realizado (lo usado) | A mercado (correcto) |
+|---|---|---|
+| CAGR | +12,0% | +11,7% |
+| Peor día | −30,10% | **−34,94%** |
+| Max drawdown | −84,1% | −86,3% |
+| Sharpe | 0,46 | **0,58** |
+| **ρ con el núcleo** | **−0,229** | **−0,569** |
+
+**La correlación real es −0,569, no −0,229.** La cobertura es dos veces y
+media más fuerte de lo que se reportó: la escalera la ocultaba porque los
+cortos abiertos ganando valor en las caídas no se registraban hasta cerrar.
+
+Y el número es mecánicamente coherente, que es lo que lo hace creíble: la
+exposición corta media es 0,54x del capital, así que una correlación de ≈−0,57
+con el mercado es exactamente lo que cabe esperar. No es un patrón
+encontrado, es una identidad.
+
+**El mismo error estaba en el sistema en vivo.** El estado del paper trading
+reportaba 99.898,76 con 13 posiciones abiertas sin contar. Corregido: el
+snapshot diario guarda ahora `equity_mercado` junto a `equity`, con una
+prueba que lo fija. Se mantienen los dos: `equity` (realizado) sigue siendo lo
+que dimensiona las posiciones —no se arriesga sobre beneficio no cobrado— y
+`equity_mercado` es lo que se mide.
+
+### 7.1 Exposición nocional: sin tope y llega a 5,26x
+
+Al reconstruir la curva se pudo medir por primera vez la exposición agregada:
+
+| Riesgo/operación | Nocional máximo |
+|---|---|
+| 0,10% | 0,52x |
+| 0,50% | 2,57x |
+| 1,00% | **5,26x** |
+| 1,50% | **10,96x** |
+
+Con 28 posiciones simultáneas al 1% de riesgo, la suma de lo expuesto llega a
+**5,26 veces el capital**. La decisión `exposicion_agregada_sin_tope` del
+catálogo aceptaba ese riesgo sin conocer su magnitud; ahora está medida.
+
+### 7.2 El tamaño óptimo, validado
+
+La sospecha de que 0,5% batía a 1% se comprobó con rejilla fina sobre la
+curva corregida:
+
+| Riesgo | CAGR | Peor día | Max DD | Sharpe |
+|---|---|---|---|---|
+| 0,10% | +5,8% | −4,25% | −12,3% | 0,59 |
+| 0,25% | +12,7% | −10,26% | −28,3% | 0,59 |
+| **0,50%** | **+19,0%** | −19,39% | −52,4% | 0,59 |
+| 0,75% | +18,6% | −27,58% | −71,5% | 0,59 |
+| 1,00% | +11,7% | −34,94% | −86,3% | 0,58 |
+| 1,50% | **−18,9%** | −48,99% | −98,5% | 0,54 |
+
+**Validado, y no por el resultado sino por la forma.** El Sharpe es
+prácticamente constante (0,58-0,59) porque el Sharpe no depende del tamaño;
+lo que varía es el CAGR, con una curva **suave, de un solo máximo, cóncava** —
+exactamente la forma que predice la fórmula de crecimiento `μL − σ²L²/2`. Un
+artefacto de sobreajuste sería irregular. Esto es mecanismo conocido, no
+patrón encontrado.
+
+El barrido de `docs/11` probó 1%, 2%, 4% y 8% y **nunca miró por debajo del
+1%**, así que se perdió el óptimo real.
+
+### 7.3 La propuesta, con todo corregido
+
+| Mezcla 50/50 | Periodo completo | 2022-2026 |
+|---|---|---|
+| bot al 0,25% | +35,7% (DD −46%) | +6,4% |
+| bot al 0,50% | +46,6% (DD −37%) | +19,7% |
+| bot al 1,00% | **+62,2%** (DD −37%) | **+40,9%** |
+
+Dentro de la mezcla conviene un bot **más** agresivo que en solitario: con
+ρ=−0,57, una pata corta más grande cancela más varianza del núcleo, y el
+drawdown de la mezcla no empeora (−37% en los dos casos). Es el mismo
+mecanismo de `docs/15`, ahora medido con la correlación verdadera.
+
+## 8. Qué falta por saber, y no se puede saber con backtest
 
 1. **La correlación en vivo.** Todo depende de `ρ`, medida sobre un backtest
    contaminado. El paper trading lleva **1 operación cerrada y 3 días**.

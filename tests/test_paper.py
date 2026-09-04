@@ -116,3 +116,27 @@ def test_cargar_completa_historial_para_estados_previos_a_esta_funcion():
                   open(path, "w"))
         estado = EstadoPapel.cargar(path)
         assert estado.historial == []
+
+
+def test_el_snapshot_incluye_el_valor_de_lo_abierto():
+    """La curva realizada es una escalera; la de mercado no.
+
+    Sin esto, medir volatilidad o correlacion sobre el historial produce
+    numeros que no corresponden al valor real de la cuenta -el 67% de los
+    dias la curva realizada no se movia aunque hubiera 20 posiciones vivas.
+    """
+    from shortbot.paper import EstadoPapel
+
+    e = EstadoPapel(creado="2026-01-01", equity_inicial=1000.0, equity=1000.0)
+    e.abiertas = [{"estrategia": "x", "simbolo": "BTC", "precio_entrada": 100.0,
+                   "cantidad": 2.0, "direccion": -1}]
+    e.registrar_snapshot("2026-01-02", {"BTC": 90.0})   # corto ganando 10 por unidad
+    p = e.historial[-1]
+    assert p["equity"] == 1000.0                        # realizado intacto
+    assert p["equity_mercado"] == 1020.0                # +2 x 10 de no realizado
+
+    e.registrar_snapshot("2026-01-03", {"BTC": 110.0})  # ahora el corto pierde
+    assert e.historial[-1]["equity_mercado"] == 980.0
+
+    e.registrar_snapshot("2026-01-04")                  # sin precios: no inventa
+    assert e.historial[-1]["equity_mercado"] == 1000.0
