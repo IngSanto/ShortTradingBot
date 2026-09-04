@@ -141,8 +141,16 @@ class PaperBroker:
         estrategia: Strategy,
         simbolo: str,
         df: pd.DataFrame,
+        veto: Optional[pd.Series] = None,
     ) -> list[str]:
-        """Avanza el estado con las barras nuevas de un activo. Devuelve el log."""
+        """Avanza el estado con las barras nuevas de un activo. Devuelve el log.
+
+        `veto` es un filtro de riesgo ya alineado con `df.index`: True en las
+        filas de SEÑAL cuya entrada resultante debe bloquearse. Se aplica aqui
+        y no dentro de la estrategia porque un filtro no es parte de la
+        hipotesis -veta entradas, nunca las genera- y tiene que poder
+        activarse o quitarse sin tocar la estrategia.
+        """
         cfg = self.config
         log: list[str] = []
         clave = f"{estrategia.name}|{simbolo}"
@@ -152,6 +160,18 @@ class PaperBroker:
         nuevas = df.index if ultima is None else df.index[df.index > pd.Timestamp(ultima)]
         if len(nuevas) == 0:
             return log
+
+        if veto is not None:
+            bloquear = veto.reindex(senales.index).fillna(False)
+            # Se informa solo de lo que ocurre en las barras NUEVAS: contar
+            # sobre todo el historico repetiria la misma cifra cada dia y
+            # convertiria el registro diario en ruido.
+            recien = (senales["entry"] & bloquear).reindex(nuevas).fillna(False)
+            if recien.any():
+                log.append(f"{clave}: {int(recien.sum())} señal(es) vetadas hoy "
+                           f"por el filtro de eventos macro")
+            senales = senales.copy()
+            senales["entry"] = senales["entry"] & ~bloquear
 
         # La primera vez no se opera el historico entero: seria un backtest
         # disfrazado de paper. Solo se marca desde donde empieza a contar.

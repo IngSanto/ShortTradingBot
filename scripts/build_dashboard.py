@@ -89,7 +89,14 @@ def curva_equity_svg(historial: list[dict], equity_inicial: float) -> str:
         return ('<div class="empty-chart">Aún no hay suficientes días para '
                 'dibujar la curva. Vuelve cuando haya al menos 2 sesiones.</div>')
 
-    valores = [p["equity"] for p in historial]
+    # `equity_mercado` incluye el valor de lo que sigue abierto; `equity` solo
+    # lo cobrado. Mirar la segunda es como leer el saldo del banco ignorando lo
+    # que tienes invertido: no se mueve en dias con 20 posiciones vivas.
+    # Se usa la primera cuando existe (estados anteriores no la tienen).
+    def _valor(p):
+        return p.get("equity_mercado", p["equity"])
+
+    valores = [_valor(p) for p in historial]
     lo, hi = min(valores + [equity_inicial]), max(valores + [equity_inicial])
     margen = max((hi - lo) * 0.1, hi * 0.01, 1.0)
     lo, hi = lo - margen, hi + margen
@@ -100,7 +107,7 @@ def curva_equity_svg(historial: list[dict], equity_inicial: float) -> str:
     def y_de(v):
         return PAD_T + (H - PAD_T - PAD_B) * (1 - (v - lo) / (hi - lo))
 
-    puntos = [(x_de(i), y_de(p["equity"])) for i, p in enumerate(historial)]
+    puntos = [(x_de(i), y_de(_valor(p))) for i, p in enumerate(historial)]
     linea = " ".join(f"{x:.1f},{y:.1f}" for x, y in puntos)
     area = f"{PAD_L:.1f},{y_de(lo):.1f} " + linea + f" {puntos[-1][0]:.1f},{y_de(lo):.1f}"
     y_base = y_de(equity_inicial)
@@ -108,7 +115,7 @@ def curva_equity_svg(historial: list[dict], equity_inicial: float) -> str:
     # Solo se etiquetan el inicio, el final y el eje: nunca un valor por punto.
     ultimo = historial[-1]
     fin_x, fin_y = puntos[-1]
-    etiqueta_fin = f"{ultimo['equity']:,.0f}"
+    etiqueta_fin = f"{_valor(ultimo):,.0f}"
 
     # Ticks en numeros redondos (0/500/1.000...), no en los limites exactos
     # calculados: un eje con "106.909" no se lee de un vistazo.

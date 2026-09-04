@@ -28,10 +28,15 @@ from shortbot.backtest import BacktestConfig  # noqa: E402
 from shortbot.data import load_csv  # noqa: E402
 from shortbot.markets import get_market  # noqa: E402
 from shortbot.paper import EstadoPapel, PaperBroker, resumen  # noqa: E402
+from shortbot.risk_filters import veto_evento_macro  # noqa: E402
 from shortbot.strategies import build  # noqa: E402
 
 ESTADO = os.path.join(RAIZ, "state", "paper.json")
 CATALOGO = os.path.join(RAIZ, "config", "catalogo.json")
+CALENDARIO = os.path.join(RAIZ, "data", "eventos", "calendario_macro.csv")
+# Ventana adoptada en docs/10, seccion 5.5: se veta la entrada que caeria la
+# vispera o el mismo dia de un FOMC o una publicacion del IPC.
+VENTANA_EVENTOS = (1, 0)
 
 
 def informe(estado: EstadoPapel, catalogo: dict) -> None:
@@ -88,6 +93,8 @@ def main() -> int:
     ap.add_argument("--max-antiguedad", type=int, default=7,
                     help="Excluir activos cuya ultima barra sea mas antigua "
                          "que esto en dias (deslistados, feeds rotos)")
+    ap.add_argument("--sin-filtro-eventos", action="store_true",
+                    help="desactiva el filtro macro adoptado en docs/10")
     ap.add_argument("--retraso", type=int, default=1,
                     help="Barras de retraso entre senal y ejecucion (el archivo llega con 1 dia)")
     args = ap.parse_args()
@@ -143,6 +150,24 @@ def main() -> int:
             print(f"    {os.path.basename(path).split('_')[0]:10s} ultima barra {ultima.date()}")
         print()
 
+    # El filtro de eventos macro (docs/10, ADOPTADO). Si el calendario no
+    # alcanza al futuro no puede vetar nada, y entonces callarse seria el peor
+    # de los fallos: el sistema parecería estar protegido sin estarlo.
+    fechas_evento = None
+    if not args.sin_filtro_eventos and os.path.exists(CALENDARIO):
+        cal = pd.read_csv(CALENDARIO)
+        fechas_evento = list(cal["fecha"])
+        futuras = (pd.to_datetime(cal["fecha"]) > pd.Timestamp.now("UTC").tz_localize(None)).sum()
+        print(f"Filtro de eventos macro: {len(fechas_evento)} fechas, {futuras} futuras "
+              f"(ventana T-{VENTANA_EVENTOS[0]} a T+{VENTANA_EVENTOS[1]})")
+        if futuras == 0:
+            print("[!] El calendario no tiene eventos futuros: el filtro NO vetaria nada. "
+                  "Ejecuta scripts/fetch_calendario_macro.py")
+    elif args.sin_filtro_eventos:
+        print("Filtro de eventos macro: DESACTIVADO por --sin-filtro-eventos")
+    else:
+        print("[!] Sin calendario de eventos: el filtro no se aplica")
+
     log_total = []
     # Ultimo cierre de cada activo, para valorar a mercado lo que quede abierto.
     # Sin esto la curva diaria solo refleja lo realizado y no se mueve mientras
@@ -155,7 +180,10 @@ def main() -> int:
             simbolo = os.path.basename(path).split("_")[0]
             df = load_csv(path)
             ultimos_precios[simbolo] = float(df["close"].iloc[-1])
-            log = broker.procesar(estado, est, simbolo, df)
+            veto = (veto_evento_macro(df.index, fechas_evento, *VENTANA_EVENTOS,
+                                      retraso_entrada=args.retraso)
+                    if fechas_evento else None)
+            log = broker.procesar(estado, est, simbolo, df, veto)
             log_total += log
 
     for linea in log_total:

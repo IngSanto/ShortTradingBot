@@ -16,6 +16,12 @@ Dos fuentes, las dos publicas y sin clave:
         Deducir las fechas de una regla ("mediados de mes") las habria dado
         por buenas.
 
+Las dos fuentes anteriores solo miran hacia ATRAS -las actas y las notas
+publicadas-, y un filtro que veta la vispera de un evento necesita saber
+cuando es el PROXIMO. Por eso se leen ademas las reuniones ya convocadas del
+panel del año y el calendario mensual de publicaciones del BLS. Sin esa parte
+el filtro no vetaria nunca nada en vivo, fallando en silencio.
+
 Escribe data/eventos/calendario_macro.csv, que es lo que consume la
 calibracion. El CSV se versiona: si manana la Fed reorganiza su web, la
 calibracion de ayer sigue siendo reproducible.
@@ -31,6 +37,8 @@ import re
 import sys
 import urllib.request
 
+import pandas as pd
+
 RAIZ = os.path.join(os.path.dirname(__file__), "..")
 SALIDA = os.path.join(RAIZ, "data", "eventos", "calendario_macro.csv")
 
@@ -42,6 +50,10 @@ BLS_ARCHIVO = "https://www.bls.gov/bls/news-release/cpi.htm"
 # y tambien las cadenas que contienen una URL. Un nombre simple pasa.
 AGENTE = "ShortTradingBot"
 
+MESES = {m: i + 1 for i, m in enumerate(
+    ["January", "February", "March", "April", "May", "June", "July",
+     "August", "September", "October", "November", "December"])}
+
 
 def descargar(url: str) -> str:
     peticion = urllib.request.Request(url, headers={"User-Agent": AGENTE})
@@ -49,19 +61,57 @@ def descargar(url: str) -> str:
         return r.read().decode("utf-8", errors="replace")
 
 
+def fomc_futuras(html: str) -> set[str]:
+    """Reuniones YA CONVOCADAS pero aun sin celebrar.
+
+    Sin esto el calendario solo miraria hacia atras, y un filtro que veta la
+    vispera de un evento no vetaria nunca nada en vivo: fallaria en silencio
+    pareciendo que funciona. Las actas solo existen para reuniones pasadas,
+    asi que las futuras hay que leerlas del panel del año, donde figuran como
+    mes + rango de dias ("March 17-18"). La decision se toma el ULTIMO dia del
+    rango.
+    """
+    fechas = set()
+    for anio in re.findall(r"(20\d\d) FOMC Meetings", html):
+        i = html.find(f"{anio} FOMC Meetings")
+        j = html.find("FOMC Meetings", i + 20)
+        trozo = re.sub(r"<[^>]+>", "|", html[i:j if j > 0 else len(html)])
+        trozo = re.sub(r"\|+", "|", trozo)
+        for mes, dias in re.findall(
+                r"\|(" + "|".join(MESES) + r")\|[\s|]*(\d{1,2}(?:-\d{1,2})?)\*?\|", trozo):
+            fechas.add(f"{anio}-{MESES[mes]:02d}-{int(dias.split('-')[-1]):02d}")
+    return fechas
+
+
+def ipc_futuras(desde_anio: int) -> set[str]:
+    """Publicaciones del IPC ya programadas, del calendario mensual del BLS.
+
+    El indice de notas archivadas solo tiene las ya publicadas. Los meses que
+    aun no han llegado se leen de /schedule/<anio>/<mes>_sched.htm, donde el
+    IPC aparece en la rejilla precedido por su dia.
+    """
+    hoy = pd.Timestamp.utcnow().tz_localize(None)
+    fechas = set()
+    for delta in range(0, 15):          # ~15 meses hacia delante
+        f = (hoy + pd.DateOffset(months=delta))
+        try:
+            h = descargar(f"https://www.bls.gov/schedule/{f.year}/{f.month:02d}_sched.htm")
+        except Exception:  # noqa: BLE001 - un mes sin publicar aun no es un error
+            continue
+        h = re.sub(r"<(script|style).*?</\1>", "", h, flags=re.S | re.I)
+        t = re.sub(r"\|+", "|", re.sub(r"<[^>]+>", "|", h))
+        m = re.search(r"\|(\d{1,2})\|Consumer Price Index\|", t)
+        if m:
+            fechas.add(f"{f.year}-{f.month:02d}-{int(m.group(1)):02d}")
+    return fechas
+
+
 def fechas_fomc(desde: int) -> tuple[set[str], list[str]]:
-    """Fechas de decision del FOMC. Devuelve (fechas, avisos)."""
+    """Fechas de decision del FOMC, pasadas y ya convocadas."""
     avisos: list[str] = []
     html = descargar(FOMC_CALENDARIO)
     actas = {_iso(d) for d in re.findall(r"fomcminutes(\d{8})", html)}
-
-    # Una reunion reciente aun no tiene actas publicadas (salen ~3 semanas
-    # despues). Se detecta comparando con los comunicados, que salen el mismo
-    # dia, y se avisa en vez de rellenar a ojo.
-    comunicados = {_iso(d) for d in re.findall(r"monetary(\d{8})a?\.htm", html)}
-    posteriores = {f for f in comunicados if actas and f > max(actas)}
-    if posteriores:
-        avisos.append(f"FOMC: reuniones sin actas todavia, NO incluidas: {sorted(posteriores)}")
+    actas |= fomc_futuras(html)
 
     anios_en_pagina = {int(f[:4]) for f in actas}
     for anio in range(desde, min(anios_en_pagina) if anios_en_pagina else desde):
@@ -78,6 +128,7 @@ def fechas_ipc(desde: int) -> tuple[set[str], list[str]]:
     """Fechas de publicacion del IPC de EEUU. Devuelve (fechas, avisos)."""
     html = descargar(BLS_ARCHIVO)
     fechas = {f"{d[4:]}-{d[:2]}-{d[2:4]}" for d in re.findall(r"cpi_(\d{8})\.htm", html)}
+    fechas |= ipc_futuras(desde)
     return {f for f in fechas if int(f[:4]) >= desde}, []
 
 

@@ -46,6 +46,14 @@ jobs:
         # registro falso, que es peor que no tener registro.
         run: python -m pytest tests/ -q
 
+      - name: Refrescar el calendario de eventos macro
+        # El filtro de docs/10 veta la vispera y el dia de un FOMC o un IPC, asi
+        # que necesita fechas FUTURAS. Si el fichero se queda atras, el filtro
+        # deja de vetar sin dar error: el sistema pareceria protegido sin
+        # estarlo. Por eso se refresca antes de operar, y por eso el fallo no
+        # detiene el dia -paper_run avisa si no hay eventos futuros.
+        run: python scripts/fetch_calendario_macro.py || echo "[!] Calendario no actualizado"
+
       - name: Actualizar datos y avanzar el paper trading
         run: python scripts/paper_run.py --actualizar --riesgo 0.001 --retraso 1
 

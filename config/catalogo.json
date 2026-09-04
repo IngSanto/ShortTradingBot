@@ -46,7 +46,7 @@
     },
     {
       "id": "squeeze_breakdown",
-      "orden_paper": 2,
+      "orden_paper": 1,
       "mercado": "cripto",
       "parametros": {},
       "justificacion_orden": "Mayor expectativa y única invariante de escala, pero pierde el 38% de la ventaja con un solo día de retraso. Entra en paper cuando haya feed en tiempo real.",
@@ -76,6 +76,12 @@
           "expectancy_r": 0.081,
           "t": 2.5
         }
+      },
+      "activada_en_paper": {
+        "fecha": "2026-09-04",
+        "motivo": "Se activa junto a pullback_to_ema_short. Toda la estructura nucleo+freno de docs/15 y la correlacion -0,569 de docs/18 se midieron con LAS DOS estrategias; correr solo una en vivo haria que el sistema real no fuera el que se analizo.",
+        "por_que_ya_no_espera_feed_en_tiempo_real": "La reserva original era que pierde 38% de ventaja con un dia de retraso. Pero el paper corre con --retraso 1 de todos modos, y a ese retraso su evidencia es E[R]=0,107 con t=3,3, que supera el umbral corregido de 2,914.",
+        "riesgo_de_exposicion": "El disparador exposicion_agregada_sin_tope pedia revisar el tope antes de anadirla. Ahora esta medido (docs/18, 7.1): al 0,10% de riesgo la exposicion nocional maxima es 0,52x del capital. Al 1% seria 5,26x, y ahi si haria falta un tope."
       }
     }
   ],
@@ -170,7 +176,8 @@
       "riesgo_aceptado": "pullback_to_ema_short corre sobre 39 activos correlacionados. En un movimiento fuerte del mercado, muchas de esas posiciones se abren juntas: el riesgo real de cola es mayor que el que sugiere mirar cada operación por separado ('diez cortos en tecnología son una posición, no diez', docs/02).",
       "por_que_se_acepta_ahora": "Con una sola estrategia activa en paper y tamaño de 0,1% por operación (tramo 1), el riesgo de cola está acotado incluso sin el tope.",
       "disparador_para_revisar": "Antes de: (a) añadir squeeze_breakdown en paralelo, (b) subir de tramo hacia dinero real, o (c) si el paper muestra varias posiciones abriéndose el mismo día con frecuencia.",
-      "referencia": "docs/02-metodologia-validacion.md, regla de gestión de riesgo nº4"
+      "referencia": "docs/02-metodologia-validacion.md, regla de gestión de riesgo nº4",
+      "medicion_2026-09-04": "Cuantificada por primera vez: la exposicion nocional agregada alcanza 0,52x del capital al 0,10% de riesgo por operacion, 2,57x al 0,50% y 5,26x al 1,00%. El tope sigue sin implementarse porque al tramo actual (0,10%) no hay nada que topar."
     }
   },
   "filtros_de_riesgo_evaluados": [
