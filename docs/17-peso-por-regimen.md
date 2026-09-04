@@ -109,4 +109,69 @@ artefacto de haber mirado los datos antes de fijar la regla.
 
 ## 5. Resultados
 
-*(Vacío hasta ejecutar.)*
+**NO SE ADOPTA.** Ninguna configuración pasa las cuatro condiciones
+pre-registradas. La prueba nula —la que la sección 4 marcó como la que
+decide— la suspende en 4 de las 5 longitudes de media.
+
+### 5.1 La rejilla, con costes aplicados
+
+Referencia (peso fijo 50/50, con costes): **+51,2% y Sharpe 1,08** en el
+periodo completo; **+21,2% y Sharpe 0,63** en 2022-2026.
+
+| Media | Bate al fijo en ambos periodos | Cambios/año | Sharpe (completo) |
+|---|---|---|---|
+| 100d | sí | **15,6** | 1,24-1,36 |
+| 150d | sí | 11,6 | 1,19-1,23 |
+| 200d | sí | 7,7 | 1,17-1,20 |
+| 250d | no | 9,8 | 0,98-1,08 |
+| 300d | no | 10,7 | 1,04-1,10 |
+
+- **Condición 1-2 (meseta): CUMPLE.** 3 de 5 longitudes baten al peso fijo en
+  los dos periodos.
+- **Condición 4 (rotación < 12/año): NO CUMPLE** en 100d, con 15,6 cambios.
+
+### 5.2 La prueba nula, que es la que decide
+
+200 regímenes aleatorios por longitud, con la misma frecuencia de cambio que
+el real. Aísla *saber cuándo cambiar* de *cambiar con esa frecuencia*:
+
+| Media | Sharpe real | Aleatorio: mediana | Aleatorio: p95 | Percentil del real |
+|---|---|---|---|---|
+| 100d | 1,33 | 0,97 | 1,28 | **97,5%** — pasa |
+| 150d | 1,23 | 0,92 | 1,24 | 93,0% — no pasa |
+| 200d | 1,20 | 0,93 | 1,22 | 92,0% — no pasa |
+| 250d | 1,04 | 0,92 | 1,29 | 75,5% — no pasa |
+| 300d | 1,07 | 0,92 | 1,32 | 72,5% — no pasa |
+
+La lectura precisa importa: los regímenes aleatorios tienen una mediana de
+0,92-0,97, **por debajo** del peso fijo (1,08), así que cambiar de peso al
+azar no ayuda. Pero su percentil 95 llega a 1,22-1,32, y el régimen real se
+queda en 1,20-1,23. **El resultado real cae dentro de lo que produce la
+suerte** con esa frecuencia de cambio: p ≈ 0,08 en la configuración de 200
+días, no significativo.
+
+### 5.3 Veredicto
+
+Ninguna celda pasa las cuatro:
+
+- **100d** pasa la nula (97,5%) pero rota 15,6 veces al año, por encima del
+  límite. Y su ventaja sobre el p95 aleatorio (1,33 contra 1,28) es de la
+  misma magnitud que el ruido de estimación con 200 muestras.
+- **150d y 200d** rotan bien y baten al peso fijo, pero no baten a un régimen
+  inventado.
+
+El +87,5% que motivó este documento era, como se temía en la sección 1, **el
+cuarto espejismo de la sesión**. La diferencia es que esta vez estaba escrito
+de antemano cómo se iba a detectar.
+
+### 5.4 Lo que sí queda en pie
+
+La estructura de `docs/15` no depende de esta regla y sobrevive intacta: el
+**peso fijo 50/50 entre núcleo y freno**, con costes incluidos, da **+51,2%
+en el periodo completo y +21,2% en 2022-2026**. Ese es el número honesto,
+sin ninguna inteligencia añadida que no se haya podido demostrar.
+
+Y queda una herramienta que faltaba: la **prueba nula contra regímenes
+aleatorios** debería aplicarse a cualquier futura regla de temporización. Es
+barata y es lo único que distingue "mi indicador funciona" de "cambiar de
+peso de vez en cuando funciona".
