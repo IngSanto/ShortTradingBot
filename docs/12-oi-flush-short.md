@@ -179,4 +179,70 @@ a mirar la reserva.
 
 ## 6. Resultados
 
-*(Vacío hasta ejecutar. Se rellena con la rejilla completa, cumpla o no.)*
+**Estado: NINGUNA DE LAS DOS SE ADOPTA.** No pasan el nivel 1, así que el
+nivel 2 ni se evalúa. Conjunto de diseño completo: 24 activos, todos con
+cobertura del 100% tras la validación de la sección 4.
+
+| Estrategia | n | E[R] | t | Activos positivos |
+|---|---|---|---|---|
+| `oi_deleverage_short` pct=5% | 803 | −0,001 | −0,03 | 42% |
+| `oi_deleverage_short` pct=10% | 1.313 | −0,007 | −0,31 | 54% |
+| `oi_deleverage_short` pct=20% | 1.998 | +0,024 | **+1,24** | 58% |
+| `oi_flush_short` (sin tocar) | 45 | −0,232 | −1,89 | 43% |
+
+El umbral era 2,914. La mejor celda llega a 1,24.
+
+### 6.1 La prueba no es la t, es cómo se movió al crecer la muestra
+
+La calibración se corrió tres veces según iba entrando la descarga. Eso da
+algo más informativo que un contraste aislado:
+
+| Activos | n (celda 20%) | t |
+|---|---|---|
+| 13 | 1.108 | +1,16 |
+| 18 | 1.507 | +0,65 |
+| **24** | **1.998** | **+1,24** |
+
+Un efecto real crece con la muestra: la t escala con la raíz de n, así que
+pasar de 1.108 a 1.998 operaciones debería haber subido un t=1,16 hasta
+≈1,56 por pura aritmética. En vez de eso la t **deambula** —baja a 0,65,
+vuelve a 1,24— sin tendencia. Eso no es una señal débil que necesite más
+datos: es ruido, y más datos no lo van a arreglar.
+
+El signo de E[R] hace lo mismo entre percentiles (−0,001, −0,007, +0,024).
+Un mecanismo real mantiene la dirección al mover el umbral.
+
+### 6.2 Lo que el dato nuevo sí aportó
+
+La validación pre-registrada (sección 4) encontró que el **7 de marzo de 2022
+el interés abierto vale exactamente cero en 11 de los 13 primeros activos**, y
+al día siguiente vuelve. Es una caída del servicio de Binance.
+
+Era el peor artefacto posible para esta hipótesis en concreto: un cero produce
+una variación diaria del −100%, que es exactamente la señal más extrema que
+`oi_deleverage_short` busca. Sin esa comprobación la estrategia habría
+disparado en todos los activos el mismo día, con la señal más fuerte de toda
+la muestra, por un fichero mal escrito — y habría parecido un hallazgo.
+
+Se corrigió en la raíz, no por fechas: un interés abierto de cero no es un
+valor, es la ausencia del dato (`cargar_open_interest` en `data.py`).
+
+### 6.3 Balance
+
+La hipótesis era razonable y el mecanismo, plausible: una liquidación forzada
+es una venta que nadie elige, y la cola de liquidaciones no se vacía dentro de
+la barra. Los datos dicen que no, o al menos que no en barras diarias — es
+posible que el proceso se agote en horas y que a cierre de día ya no quede
+nada que capturar, pero eso es otra hipótesis y necesitaría datos intradía y
+su propio pre-registro.
+
+`oi_flush_short`, con 45 operaciones y t=−1,89, tampoco funciona; su muestra
+es demasiado pequeña para concluir mucho más que eso.
+
+**Consecuencia para el catálogo**: dos estrategias más descartadas, K pasa de
+14 a... 14 (ya se contaban aquí). El umbral de Bonferroni se queda en 2,914.
+
+**Consecuencia para el objetivo del 100%**: esta era la última fuente de
+información sin explorar —lo único que no está en la serie de precios. Con
+ella cerrada, las cinco vías de `docs/11` y `docs/14` están agotadas y el
+sistema real sigue siendo el mismo: 18% anual, Sharpe 0,56.

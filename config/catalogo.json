@@ -1,10 +1,10 @@
 {
   "version": 3,
-  "actualizado": "2026-09-03",
+  "actualizado": "2026-09-04",
   "criterio_admision": {
     "puertas": "1, 2, 2.5 y 3 de docs/02-metodologia-validacion.md",
-    "t_minimo": 2.87,
-    "nota_t": "Bonferroni para las K=12 estrategias probadas (alfa=0,05). Sin corregir sería 1,96; usar el umbral corregido evita premiar al ganador de una búsqueda amplia.",
+    "t_minimo": 2.914,
+    "nota_t": "Bonferroni para las K=14 estrategias probadas (alfa=0,05). Subio de 2,865 al anadir las dos hipotesis de interes abierto (docs/12). Las dos aprobadas, con t=5,85 y t=5,12, superan el umbral nuevo con holgura: la correccion no reabre ninguna decision pasada.",
     "meseta_minima": 0.6,
     "activos_positivos_minimo": 0.5,
     "alfa_en_alcista": "obligatoria: si solo gana en régimen bajista es un seguro y se dimensiona distinto"
@@ -125,6 +125,18 @@
     {
       "id": "relative_weakness_short",
       "motivo": "Solo probada en acciones, donde el mercado entero fue descartado (ver decisiones_confirmadas.mercado_unico_cripto). Sin pata larga no tiene argumento."
+    },
+    {
+      "id": "oi_deleverage_short",
+      "t": 1.24,
+      "motivo": "Desapalancamiento forzado como continuacion. Mejor celda t=1,24 contra 2,914. Lo decisivo no es la t sino que NO crecio con la muestra: 1,16 con 13 activos, 0,65 con 18, 1,24 con 24. Un efecto real escala con la raiz de n; este deambula. El signo de E[R] tambien cambia entre percentiles. Es ruido, y mas datos no lo arreglan.",
+      "referencia": "docs/12-oi-flush-short.md"
+    },
+    {
+      "id": "oi_flush_short",
+      "t": -1.89,
+      "motivo": "Estaba escrita en el registro desde antes de que existieran los datos, asi que se evaluo tal cual, sin tocar un parametro. 45 operaciones, E[R]=-0,232, t=-1,89.",
+      "referencia": "docs/12-oi-flush-short.md"
     }
   ],
   "reglas_de_riesgo": {
@@ -195,5 +207,15 @@
       "pendiente": "No esta conectado al paper trading todavia: adoptarlo en el registro y activarlo en la operativa diaria son dos decisiones distintas.",
       "referencia": "docs/10-filtro-eventos-macro.md"
     }
-  ]
+  ],
+  "vias_agotadas_para_mayor_rendimiento": {
+    "fecha": "2026-09-04",
+    "contexto": "Busqueda sistematica de una configuracion que acercara al 100% anual. Las cinco vias posibles quedan medidas y cerradas.",
+    "tamano_y_exposicion": "CERRADA. El sistema ya opera en su optimo de crecimiento: Sharpe 0,56 da un techo de Kelly del 15,7% y se observan 17,9%. Subir el riesgo al 4% sin tope vacia la cuenta (docs/11).",
+    "pata_larga": "CERRADA. Sharpe -0,43 sobre universo sin sesgo. El Sharpe 1,12 que aparecio en acciones era beta: comprar y mantener esas 15 acciones escogidas a mano rendia 26,9% contra 17,5% de la estrategia (docs/13, docs/14).",
+    "otros_mercados": "CERRADA. Sin ventaja fuera de cripto. Los futuros tienen la mejor correlacion interna (0,21) y dan Sharpe 0,22: mas apuestas independientes no valen nada sin expectativa en ellas.",
+    "diversificacion": "CERRADA. El universo de 34 clases de activo si duplica las apuestas independientes (3,5 frente a 1,7), pero la cartera pierde el 91%. Diversificar multiplica una ventaja; si es cero, multiplica cero (docs/14).",
+    "informacion_nueva": "CERRADA. Interes abierto y posicionamiento, la unica fuente que no esta en el precio, no produce se~nal (docs/12).",
+    "conclusion": "El sistema real es el que ya estaba: 18% anual con Sharpe 0,56 sobre cripto en corto. Es la unica ventaja medida y replicada del proyecto."
+  }
 }
