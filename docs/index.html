@@ -109,104 +109,65 @@
       <span class="badge-mercado">cripto</span>
     </h1>
     <div class="subtitle">Puerta 4 de la validación: papel, sin dinero real, mínimo 50 operaciones o 60 sesiones.</div>
-    <div class="updated">Última actualización: 2026-09-05 10:21 UTC · generado automáticamente, sin intervención de Claude</div>
+    <div class="subtitle">Estrategias: pullback_to_ema_short, squeeze_breakdown · filtro de eventos macro T-1 a T+0 · retraso 1 barra(s)</div>
+    <div class="updated">Última actualización: 2026-09-05 15:07 UTC · generado automáticamente, sin intervención de Claude</div>
   </header>
 
   <section class="tiles">
-    <div class="tile tile-bad">
+    <div class="tile ">
       <div class="tile-label">Equity</div>
-      <div class="tile-value">$99,798</div>
-      <div class="tile-sub">-0.20%</div>
+      <div class="tile-value">$100,000</div>
+      <div class="tile-sub">+0.00%</div>
     </div>
     <div class="tile ">
       <div class="tile-label">Operaciones cerradas</div>
-      <div class="tile-value">2</div>
+      <div class="tile-value">0</div>
       <div class="tile-sub">objetivo: 50</div>
     </div>
     <div class="tile ">
       <div class="tile-label">Expectativa</div>
-      <div class="tile-value">-1.010 R</div>
-      <div class="tile-sub">por operación</div>
+      <div class="tile-value">— R</div>
+      <div class="tile-sub">aún sin datos</div>
     </div>
     <div class="tile ">
       <div class="tile-label">Acierto</div>
-      <div class="tile-value">0.0%</div>
-      <div class="tile-sub">profit factor 0.00</div>
+      <div class="tile-value">—</div>
+      
     </div>
     <div class="tile ">
       <div class="tile-label">Peor operación</div>
-      <div class="tile-value">-1.01 R</div>
+      <div class="tile-value">—</div>
       
     </div>
     <div class="tile ">
       <div class="tile-label">Posiciones abiertas</div>
-      <div class="tile-value">14</div>
+      <div class="tile-value">0</div>
       <div class="tile-sub">0 señal(es) pendiente(s)</div>
     </div>
     <div class="tile ">
       <div class="tile-label">Días corriendo</div>
-      <div class="tile-value">6</div>
-      <div class="tile-sub">desde 2026-08-30</div>
+      <div class="tile-value">1</div>
+      <div class="tile-sub">desde 2026-09-05</div>
     </div>
     <div class="tile ">
       <div class="tile-label">Progreso puerta 4</div>
-      <div class="tile-value">10%</div>
+      <div class="tile-value">2%</div>
       <div class="tile-sub">en curso</div>
     </div></section>
 
   <h2>Curva de equity</h2>
   <div class="card">
-    
-    <svg viewBox="0 0 720 220" class="equity-chart" role="img"
-         aria-label="Curva de equity del paper trading">
-      <line x1="56" y1="175.9" x2="704" y2="175.9" class="grid"/><text x="48" y="179.9" class="axis-label" text-anchor="end">99,000</text><line x1="56" y1="95.9" x2="704" y2="95.9" class="grid"/><text x="48" y="99.9" class="axis-label" text-anchor="end">100,000</text><line x1="56" y1="16.0" x2="704" y2="16.0" class="grid"/><text x="48" y="20.0" class="axis-label" text-anchor="end">101,000</text>
-      <line x1="56" y1="95.9" x2="704" y2="95.9"
-            class="baseline-inicial"/>
-      <polygon points="56.0,192.0 56.0,95.9 185.6,104.0 315.2,104.0 444.8,104.0 574.4,104.0 704.0,112.1 704.0,192.0" class="area-fill"/>
-      <polyline points="56.0,95.9 185.6,104.0 315.2,104.0 444.8,104.0 574.4,104.0 704.0,112.1" class="line-main"/>
-      <circle cx="704.0" cy="112.1" r="4.5" class="end-dot"/>
-      <text x="698.0" y="102.1" class="end-label"
-            text-anchor="end">99,798</text>
-    </svg>
+    <div class="empty-chart">Aún no hay suficientes días para dibujar la curva. Vuelve cuando haya al menos 2 sesiones.</div>
   </div>
 
   <h2>Paper vs. lo que prometía el backtest</h2>
-  <div class="card table-scroll">
-        <table class="tabla">
-          <thead><tr><th>Estrategia</th><th class="num">n</th><th class="num">E[R] real</th>
-          <th class="num">E[R] esperado*</th><th>Estado</th></tr></thead>
-          <tbody>
-            <tr>
-              <td>pullback_to_ema_short</td>
-              <td class="num">2</td>
-              <td class="num">-1.010 R</td>
-              <td class="num">+0.124 R</td>
-              <td class="badge-">muestra corta (n=2)</td>
-            </tr></tbody>
-        </table>
-        <p class="caption">* del backtest, con el mismo retraso de ejecución (1 barra) que usa el paper.</p></div>
+  <div class="card table-scroll"><p class="muted">Sin operaciones cerradas todavía: nada que contrastar contra el backtest.</p></div>
 
   <h2>Bitácora — operaciones cerradas recientes</h2>
   <div class="card table-scroll">
     <table class="tabla">
       <thead><tr><th>Salida</th><th>Activo</th><th>Estrategia</th><th>Motivo</th><th class="num">Barras</th><th class="num">Resultado</th></tr></thead>
-      <tbody>
-      <tr>
-        <td>2026-09-04</td>
-        <td class="mono">ADAUSDT</td>
-        <td>pullback_to_ema_short</td>
-        <td>stop</td>
-        <td class="num">4</td>
-        <td class="num badge-bad">▼ -1.01 R</td>
-      </tr>
-      <tr>
-        <td>2026-08-31</td>
-        <td class="mono">ARBUSDT</td>
-        <td>pullback_to_ema_short</td>
-        <td>stop</td>
-        <td class="num">1</td>
-        <td class="num badge-bad">▼ -1.01 R</td>
-      </tr></tbody>
+      <tbody><tr><td colspan="6" class="muted">Sin operaciones cerradas todavía.</td></tr></tbody>
     </table>
   </div>
 
@@ -214,119 +175,7 @@
   <div class="card table-scroll">
     <table class="tabla">
       <thead><tr><th>Entrada</th><th>Activo</th><th>Estrategia</th><th class="num">Precio entrada</th><th class="num">Stop</th><th class="num">Barras</th></tr></thead>
-      <tbody>
-      <tr>
-        <td>2026-08-31</td>
-        <td class="mono">ZILUSDT</td>
-        <td>pullback_to_ema_short</td>
-        <td class="num">0.0025</td>
-        <td class="num">0.0029</td>
-        <td class="num">5/20</td>
-      </tr>
-      <tr>
-        <td>2026-09-01</td>
-        <td class="mono">ALGOUSDT</td>
-        <td>pullback_to_ema_short</td>
-        <td class="num">0.0855</td>
-        <td class="num">0.0956</td>
-        <td class="num">4/20</td>
-      </tr>
-      <tr>
-        <td>2026-09-01</td>
-        <td class="mono">ATOMUSDT</td>
-        <td>pullback_to_ema_short</td>
-        <td class="num">1.4680</td>
-        <td class="num">1.6377</td>
-        <td class="num">4/20</td>
-      </tr>
-      <tr>
-        <td>2026-09-01</td>
-        <td class="mono">CHZUSDT</td>
-        <td>pullback_to_ema_short</td>
-        <td class="num">0.0132</td>
-        <td class="num">0.0149</td>
-        <td class="num">4/20</td>
-      </tr>
-      <tr>
-        <td>2026-09-01</td>
-        <td class="mono">DOTUSDT</td>
-        <td>pullback_to_ema_short</td>
-        <td class="num">0.8398</td>
-        <td class="num">0.9373</td>
-        <td class="num">4/20</td>
-      </tr>
-      <tr>
-        <td>2026-09-01</td>
-        <td class="mono">ETCUSDT</td>
-        <td>pullback_to_ema_short</td>
-        <td class="num">7.2820</td>
-        <td class="num">8.1619</td>
-        <td class="num">4/20</td>
-      </tr>
-      <tr>
-        <td>2026-09-01</td>
-        <td class="mono">HBARUSDT</td>
-        <td>pullback_to_ema_short</td>
-        <td class="num">0.0736</td>
-        <td class="num">0.0811</td>
-        <td class="num">4/20</td>
-      </tr>
-      <tr>
-        <td>2026-09-01</td>
-        <td class="mono">INJUSDT</td>
-        <td>pullback_to_ema_short</td>
-        <td class="num">4.9300</td>
-        <td class="num">5.7265</td>
-        <td class="num">4/20</td>
-      </tr>
-      <tr>
-        <td>2026-09-01</td>
-        <td class="mono">LTCUSDT</td>
-        <td>pullback_to_ema_short</td>
-        <td class="num">48.5200</td>
-        <td class="num">52.5936</td>
-        <td class="num">4/20</td>
-      </tr>
-      <tr>
-        <td>2026-09-01</td>
-        <td class="mono">RUNEUSDT</td>
-        <td>pullback_to_ema_short</td>
-        <td class="num">0.4796</td>
-        <td class="num">0.5439</td>
-        <td class="num">4/20</td>
-      </tr>
-      <tr>
-        <td>2026-09-01</td>
-        <td class="mono">SUIUSDT</td>
-        <td>pullback_to_ema_short</td>
-        <td class="num">0.7266</td>
-        <td class="num">0.8320</td>
-        <td class="num">4/20</td>
-      </tr>
-      <tr>
-        <td>2026-09-01</td>
-        <td class="mono">XLMUSDT</td>
-        <td>pullback_to_ema_short</td>
-        <td class="num">0.1772</td>
-        <td class="num">0.1992</td>
-        <td class="num">4/20</td>
-      </tr>
-      <tr>
-        <td>2026-09-03</td>
-        <td class="mono">DOGEUSDT</td>
-        <td>pullback_to_ema_short</td>
-        <td class="num">0.0817</td>
-        <td class="num">0.0909</td>
-        <td class="num">2/20</td>
-      </tr>
-      <tr>
-        <td>2026-09-04</td>
-        <td class="mono">GALAUSDT</td>
-        <td>pullback_to_ema_short</td>
-        <td class="num">0.0018</td>
-        <td class="num">0.0021</td>
-        <td class="num">1/20</td>
-      </tr></tbody>
+      <tbody><tr><td colspan="6" class="muted">Ninguna posición abierta ahora mismo.</td></tr></tbody>
     </table>
   </div>
 
@@ -336,6 +185,17 @@
       <thead><tr><th>Señal</th><th>Activo</th><th>Estrategia</th><th>Parámetros de riesgo</th></tr></thead>
       <tbody><tr><td colspan="4" class="muted">Ninguna señal a la espera de ejecutarse.</td></tr></tbody>
     </table>
+  </div>
+
+  <h2>Registros anteriores</h2>
+  <div class="card table-scroll">
+    <table class="tabla">
+      <thead><tr><th>Desde</th><th>Hasta</th><th class="num">Sesiones</th>
+      <th class="num">Operaciones</th><th>Motivo del cierre</th></tr></thead>
+      <tbody><tr><td>2026-08-30</td><td>2026-09-05</td><td class='num'>6</td><td class='num'>2</td><td class='muted'>Cambio de configuracion: se activa squeeze_breakdown y se conecta el filtro de eventos macro (docs/10). Las 2 operaciones anteriores salieron de un sistema distinto -solo pullback_to_ema_short, sin filtro- y no son sumables con las que vengan. Ese registro medía ademas el equity solo realizado, sin valorar lo abierto (docs/18, seccion 7).</td></tr></tbody>
+    </table>
+    <p class="caption">Un cambio de configuración cierra el registro y abre otro:
+    las operaciones de dos sistemas distintos no son sumables.</p>
   </div>
 
   <footer>

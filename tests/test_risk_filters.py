@@ -9,6 +9,10 @@ import pandas as pd
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
+from shortbot.backtest import BacktestConfig
+from shortbot.data import synthetic_perp
+from shortbot.paper import EstadoPapel, PaperBroker
+from shortbot.strategies import build
 from shortbot.risk_filters import (
     ventana_eventos,
     veto_evento_macro,
@@ -142,3 +146,26 @@ def test_ninguna_entrada_cae_dentro_de_la_ventana_de_evento():
         prohibidas = set(idx[ventana])
         assert not res.trades.empty, "sin operaciones no se prueba nada"
         assert not set(res.trades["entry_date"]) & prohibidas, f"retraso={retraso}"
+
+
+def test_el_arranque_no_reporta_vetos_del_historico():
+    """En la primera pasada `nuevas` es TODO el historico.
+
+    Si el recuento de vetos corriera antes del corto-circuito de arranque,
+    cada activo anunciaria las señales vetadas de años atras como "vetadas
+    hoy". El numero seria correcto y la etiqueta falsa, que es justo como
+    estos fallos sobreviven a una revision por encima.
+    """
+    df = synthetic_perp(n=400, seed=7)
+    estado = EstadoPapel(creado="2026-01-01T00:00:00+00:00",
+                         equity_inicial=100_000.0, equity=100_000.0)
+    broker = PaperBroker(BacktestConfig(initial_equity=100_000.0))
+    veto = pd.Series(True, index=df.index)          # el caso extremo: veta todo
+
+    log = broker.procesar(estado, build("pullback_to_ema_short"), "TEST", df, veto)
+
+    assert not any("vetadas hoy" in linea for linea in log), log
+    assert any("arranque" in linea for linea in log), log
+    # Y el arranque tiene que dejar marcado el punto de partida, no operar.
+    assert estado.ultima_barra["pullback_to_ema_short|TEST"] == str(df.index[-1])
+    assert estado.cerradas == [] and estado.abiertas == []

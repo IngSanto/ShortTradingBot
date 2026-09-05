@@ -15,6 +15,7 @@ de leyenda). Sin librerías: todo el gráfico es SVG inline generado a mano.
 
 from __future__ import annotations
 
+import glob
 import html
 import json
 import math
@@ -261,6 +262,47 @@ def main() -> int:
     generado = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     mercados_aprobados = ", ".join(sorted({e["mercado"] for e in catalogo["aprobadas_para_paper"]}))
 
+    # Que sistema esta produciendo estas operaciones. Un registro sin esto es
+    # una lista de numeros sin procedencia: al cambiar la configuracion, las
+    # cifras de antes y las de despues dejan de ser sumables y nada lo indica.
+    cfg = getattr(estado, "configuracion", None) or {}
+    partes = []
+    if cfg.get("estrategias"):
+        partes.append("Estrategias: " + ", ".join(cfg["estrategias"]))
+    if cfg.get("filtro_eventos_macro"):
+        v = cfg.get("ventana_eventos", [1, 0])
+        partes.append(f"filtro de eventos macro T-{v[0]} a T+{v[1]}")
+    if cfg.get("retraso_entrada_barras") is not None:
+        partes.append(f"retraso {cfg['retraso_entrada_barras']} barra(s)")
+    config_html = (f'<div class="subtitle">{html.escape(" · ".join(partes))}</div>'
+                   if partes else "")
+
+    # Registros anteriores cerrados por un cambio de configuracion. Se enseñan
+    # porque omitirlos haria parecer que este es el primer intento.
+    archivados = sorted(glob.glob(os.path.join(RAIZ, "state", "archivo", "paper_*.json")))
+    archivo_html = ""
+    if archivados:
+        filas = []
+        for path in archivados:
+            a = json.load(open(path))
+            filas.append(
+                f"<tr><td>{html.escape(a['creado'][:10])}</td>"
+                f"<td>{html.escape((a.get('cerrado') or '')[:10])}</td>"
+                f"<td class='num'>{len(a.get('historial', []))}</td>"
+                f"<td class='num'>{len(a.get('cerradas', []))}</td>"
+                f"<td class='muted'>{html.escape(a.get('motivo_cierre', ''))}</td></tr>")
+        archivo_html = f"""
+  <h2>Registros anteriores</h2>
+  <div class="card table-scroll">
+    <table class="tabla">
+      <thead><tr><th>Desde</th><th>Hasta</th><th class="num">Sesiones</th>
+      <th class="num">Operaciones</th><th>Motivo del cierre</th></tr></thead>
+      <tbody>{''.join(filas)}</tbody>
+    </table>
+    <p class="caption">Un cambio de configuración cierra el registro y abre otro:
+    las operaciones de dos sistemas distintos no son sumables.</p>
+  </div>"""
+
     html_out = f"""<!doctype html>
 <html lang="es">
 <head>
@@ -372,6 +414,7 @@ def main() -> int:
       <span class="badge-mercado">{html.escape(mercados_aprobados)}</span>
     </h1>
     <div class="subtitle">Puerta 4 de la validación: papel, sin dinero real, mínimo {MIN_OPERACIONES} operaciones o {MIN_SESIONES} sesiones.</div>
+    {config_html}
     <div class="updated">Última actualización: {generado} · generado automáticamente, sin intervención de Claude</div>
   </header>
 
@@ -408,6 +451,7 @@ def main() -> int:
       <tbody>{bitacora_pendientes}</tbody>
     </table>
   </div>
+{archivo_html}
 
   <footer>
     Dinero simulado. Nada en esta página es asesoramiento financiero.

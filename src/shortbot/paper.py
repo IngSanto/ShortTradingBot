@@ -75,6 +75,11 @@ class EstadoPapel:
     # `equity` por sí solo es un escalar: sin este historial no hay forma de
     # saber cómo se llegó hasta ahí.
     historial: list[dict] = field(default_factory=list)
+    # Que sistema produjo estas operaciones: estrategias activas, filtros y
+    # retraso. Sin esto un registro es una lista de numeros sin procedencia, y
+    # basta con activar una estrategia para que las cifras de antes y las de
+    # despues dejen de ser sumables sin que nada avise.
+    configuracion: dict = field(default_factory=dict)
 
     @classmethod
     def cargar(cls, path: str, equity_inicial: float = 100_000.0) -> "EstadoPapel":
@@ -161,6 +166,18 @@ class PaperBroker:
         if len(nuevas) == 0:
             return log
 
+        # La primera vez no se opera el historico entero: seria un backtest
+        # disfrazado de paper. Solo se marca desde donde empieza a contar.
+        #
+        # Va ANTES del filtro a proposito. En el arranque `nuevas` es el
+        # historico completo, asi que contar vetos aqui reportaria señales de
+        # hace años como "vetadas hoy": un numero correcto con una etiqueta
+        # falsa, que es la forma en que estos fallos pasan desapercibidos.
+        if ultima is None:
+            estado.ultima_barra[clave] = str(df.index[-1])
+            log.append(f"{clave}: arranque, marcado en {df.index[-1].date()}")
+            return log
+
         if veto is not None:
             bloquear = veto.reindex(senales.index).fillna(False)
             # Se informa solo de lo que ocurre en las barras NUEVAS: contar
@@ -172,13 +189,6 @@ class PaperBroker:
                            f"por el filtro de eventos macro")
             senales = senales.copy()
             senales["entry"] = senales["entry"] & ~bloquear
-
-        # La primera vez no se opera el historico entero: seria un backtest
-        # disfrazado de paper. Solo se marca desde donde empieza a contar.
-        if ultima is None:
-            estado.ultima_barra[clave] = str(df.index[-1])
-            log.append(f"{clave}: arranque, marcado en {df.index[-1].date()}")
-            return log
 
         for ts in nuevas:
             i = df.index.get_loc(ts)

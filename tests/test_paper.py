@@ -140,3 +140,22 @@ def test_el_snapshot_incluye_el_valor_de_lo_abierto():
 
     e.registrar_snapshot("2026-01-04")                  # sin precios: no inventa
     assert e.historial[-1]["equity_mercado"] == 1000.0
+
+
+def test_la_configuracion_sobrevive_al_guardado(tmp_path):
+    """Un registro sin procedencia no sirve para nada.
+
+    `guardar` usa asdict(), que solo serializa CAMPOS del dataclass: si
+    `configuracion` se pusiera como atributo suelto se perderia al escribir
+    sin dar ningun error, y el registro nuevo pareceria estar declarando su
+    sistema sin declararlo.
+    """
+    path = tmp_path / "paper.json"
+    EstadoPapel(creado="2026-01-01T00:00:00+00:00", equity_inicial=1000.0, equity=1000.0,
+                configuracion={"estrategias": ["a", "b"], "filtro_eventos_macro": True}
+                ).guardar(str(path))
+
+    assert json.loads(path.read_text())["configuracion"]["estrategias"] == ["a", "b"]
+    # Y un estado anterior a que el campo existiera tiene que seguir cargando.
+    path.write_text(json.dumps({"creado": "x", "equity_inicial": 1.0, "equity": 1.0}))
+    assert EstadoPapel.cargar(str(path)).configuracion == {}
