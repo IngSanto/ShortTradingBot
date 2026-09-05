@@ -109,23 +109,23 @@
       <span class="badge-mercado">cripto</span>
     </h1>
     <div class="subtitle">Puerta 4 de la validación: papel, sin dinero real, mínimo 50 operaciones o 60 sesiones.</div>
-    <div class="updated">Última actualización: 2026-09-04 15:04 UTC · generado automáticamente, sin intervención de Claude</div>
+    <div class="updated">Última actualización: 2026-09-05 10:21 UTC · generado automáticamente, sin intervención de Claude</div>
   </header>
 
   <section class="tiles">
     <div class="tile tile-bad">
       <div class="tile-label">Equity</div>
-      <div class="tile-value">$99,899</div>
-      <div class="tile-sub">-0.10%</div>
+      <div class="tile-value">$99,798</div>
+      <div class="tile-sub">-0.20%</div>
     </div>
     <div class="tile ">
       <div class="tile-label">Operaciones cerradas</div>
-      <div class="tile-value">1</div>
+      <div class="tile-value">2</div>
       <div class="tile-sub">objetivo: 50</div>
     </div>
     <div class="tile ">
       <div class="tile-label">Expectativa</div>
-      <div class="tile-value">-1.012 R</div>
+      <div class="tile-value">-1.010 R</div>
       <div class="tile-sub">por operación</div>
     </div>
     <div class="tile ">
@@ -140,17 +140,17 @@
     </div>
     <div class="tile ">
       <div class="tile-label">Posiciones abiertas</div>
-      <div class="tile-value">13</div>
-      <div class="tile-sub">1 señal(es) pendiente(s)</div>
+      <div class="tile-value">14</div>
+      <div class="tile-sub">0 señal(es) pendiente(s)</div>
     </div>
     <div class="tile ">
       <div class="tile-label">Días corriendo</div>
-      <div class="tile-value">5</div>
+      <div class="tile-value">6</div>
       <div class="tile-sub">desde 2026-08-30</div>
     </div>
     <div class="tile ">
       <div class="tile-label">Progreso puerta 4</div>
-      <div class="tile-value">8%</div>
+      <div class="tile-value">10%</div>
       <div class="tile-sub">en curso</div>
     </div></section>
 
@@ -159,14 +159,14 @@
     
     <svg viewBox="0 0 720 220" class="equity-chart" role="img"
          aria-label="Curva de equity del paper trading">
-      <line x1="56" y1="177.2" x2="704" y2="177.2" class="grid"/><text x="48" y="181.2" class="axis-label" text-anchor="end">99,000</text><line x1="56" y1="96.6" x2="704" y2="96.6" class="grid"/><text x="48" y="100.6" class="axis-label" text-anchor="end">100,000</text><line x1="56" y1="16.0" x2="704" y2="16.0" class="grid"/><text x="48" y="20.0" class="axis-label" text-anchor="end">101,000</text>
-      <line x1="56" y1="96.6" x2="704" y2="96.6"
+      <line x1="56" y1="175.9" x2="704" y2="175.9" class="grid"/><text x="48" y="179.9" class="axis-label" text-anchor="end">99,000</text><line x1="56" y1="95.9" x2="704" y2="95.9" class="grid"/><text x="48" y="99.9" class="axis-label" text-anchor="end">100,000</text><line x1="56" y1="16.0" x2="704" y2="16.0" class="grid"/><text x="48" y="20.0" class="axis-label" text-anchor="end">101,000</text>
+      <line x1="56" y1="95.9" x2="704" y2="95.9"
             class="baseline-inicial"/>
-      <polygon points="56.0,192.0 56.0,96.6 272.0,104.7 488.0,104.7 704.0,111.4 704.0,192.0" class="area-fill"/>
-      <polyline points="56.0,96.6 272.0,104.7 488.0,104.7 704.0,111.4" class="line-main"/>
-      <circle cx="704.0" cy="111.4" r="4.5" class="end-dot"/>
-      <text x="698.0" y="101.4" class="end-label"
-            text-anchor="end">99,816</text>
+      <polygon points="56.0,192.0 56.0,95.9 185.6,104.0 315.2,104.0 444.8,104.0 574.4,104.0 704.0,112.1 704.0,192.0" class="area-fill"/>
+      <polyline points="56.0,95.9 185.6,104.0 315.2,104.0 444.8,104.0 574.4,104.0 704.0,112.1" class="line-main"/>
+      <circle cx="704.0" cy="112.1" r="4.5" class="end-dot"/>
+      <text x="698.0" y="102.1" class="end-label"
+            text-anchor="end">99,798</text>
     </svg>
   </div>
 
@@ -178,10 +178,10 @@
           <tbody>
             <tr>
               <td>pullback_to_ema_short</td>
-              <td class="num">1</td>
-              <td class="num">-1.012 R</td>
+              <td class="num">2</td>
+              <td class="num">-1.010 R</td>
               <td class="num">+0.124 R</td>
-              <td class="badge-">muestra corta (n=1)</td>
+              <td class="badge-">muestra corta (n=2)</td>
             </tr></tbody>
         </table>
         <p class="caption">* del backtest, con el mismo retraso de ejecución (1 barra) que usa el paper.</p></div>
@@ -191,6 +191,14 @@
     <table class="tabla">
       <thead><tr><th>Salida</th><th>Activo</th><th>Estrategia</th><th>Motivo</th><th class="num">Barras</th><th class="num">Resultado</th></tr></thead>
       <tbody>
+      <tr>
+        <td>2026-09-04</td>
+        <td class="mono">ADAUSDT</td>
+        <td>pullback_to_ema_short</td>
+        <td>stop</td>
+        <td class="num">4</td>
+        <td class="num badge-bad">▼ -1.01 R</td>
+      </tr>
       <tr>
         <td>2026-08-31</td>
         <td class="mono">ARBUSDT</td>
@@ -213,15 +221,7 @@
         <td>pullback_to_ema_short</td>
         <td class="num">0.0025</td>
         <td class="num">0.0029</td>
-        <td class="num">2/20</td>
-      </tr>
-      <tr>
-        <td>2026-09-01</td>
-        <td class="mono">ADAUSDT</td>
-        <td>pullback_to_ema_short</td>
-        <td class="num">0.1977</td>
-        <td class="num">0.2265</td>
-        <td class="num">1/20</td>
+        <td class="num">5/20</td>
       </tr>
       <tr>
         <td>2026-09-01</td>
@@ -229,7 +229,7 @@
         <td>pullback_to_ema_short</td>
         <td class="num">0.0855</td>
         <td class="num">0.0956</td>
-        <td class="num">1/20</td>
+        <td class="num">4/20</td>
       </tr>
       <tr>
         <td>2026-09-01</td>
@@ -237,7 +237,7 @@
         <td>pullback_to_ema_short</td>
         <td class="num">1.4680</td>
         <td class="num">1.6377</td>
-        <td class="num">1/20</td>
+        <td class="num">4/20</td>
       </tr>
       <tr>
         <td>2026-09-01</td>
@@ -245,7 +245,7 @@
         <td>pullback_to_ema_short</td>
         <td class="num">0.0132</td>
         <td class="num">0.0149</td>
-        <td class="num">1/20</td>
+        <td class="num">4/20</td>
       </tr>
       <tr>
         <td>2026-09-01</td>
@@ -253,7 +253,7 @@
         <td>pullback_to_ema_short</td>
         <td class="num">0.8398</td>
         <td class="num">0.9373</td>
-        <td class="num">1/20</td>
+        <td class="num">4/20</td>
       </tr>
       <tr>
         <td>2026-09-01</td>
@@ -261,7 +261,7 @@
         <td>pullback_to_ema_short</td>
         <td class="num">7.2820</td>
         <td class="num">8.1619</td>
-        <td class="num">1/20</td>
+        <td class="num">4/20</td>
       </tr>
       <tr>
         <td>2026-09-01</td>
@@ -269,7 +269,7 @@
         <td>pullback_to_ema_short</td>
         <td class="num">0.0736</td>
         <td class="num">0.0811</td>
-        <td class="num">1/20</td>
+        <td class="num">4/20</td>
       </tr>
       <tr>
         <td>2026-09-01</td>
@@ -277,7 +277,7 @@
         <td>pullback_to_ema_short</td>
         <td class="num">4.9300</td>
         <td class="num">5.7265</td>
-        <td class="num">1/20</td>
+        <td class="num">4/20</td>
       </tr>
       <tr>
         <td>2026-09-01</td>
@@ -285,7 +285,7 @@
         <td>pullback_to_ema_short</td>
         <td class="num">48.5200</td>
         <td class="num">52.5936</td>
-        <td class="num">1/20</td>
+        <td class="num">4/20</td>
       </tr>
       <tr>
         <td>2026-09-01</td>
@@ -293,7 +293,7 @@
         <td>pullback_to_ema_short</td>
         <td class="num">0.4796</td>
         <td class="num">0.5439</td>
-        <td class="num">1/20</td>
+        <td class="num">4/20</td>
       </tr>
       <tr>
         <td>2026-09-01</td>
@@ -301,7 +301,7 @@
         <td>pullback_to_ema_short</td>
         <td class="num">0.7266</td>
         <td class="num">0.8320</td>
-        <td class="num">1/20</td>
+        <td class="num">4/20</td>
       </tr>
       <tr>
         <td>2026-09-01</td>
@@ -309,6 +309,22 @@
         <td>pullback_to_ema_short</td>
         <td class="num">0.1772</td>
         <td class="num">0.1992</td>
+        <td class="num">4/20</td>
+      </tr>
+      <tr>
+        <td>2026-09-03</td>
+        <td class="mono">DOGEUSDT</td>
+        <td>pullback_to_ema_short</td>
+        <td class="num">0.0817</td>
+        <td class="num">0.0909</td>
+        <td class="num">2/20</td>
+      </tr>
+      <tr>
+        <td>2026-09-04</td>
+        <td class="mono">GALAUSDT</td>
+        <td>pullback_to_ema_short</td>
+        <td class="num">0.0018</td>
+        <td class="num">0.0021</td>
         <td class="num">1/20</td>
       </tr></tbody>
     </table>
@@ -318,13 +334,7 @@
   <div class="card table-scroll">
     <table class="tabla">
       <thead><tr><th>Señal</th><th>Activo</th><th>Estrategia</th><th>Parámetros de riesgo</th></tr></thead>
-      <tbody>
-      <tr>
-        <td>2026-09-01</td>
-        <td class="mono">DOGEUSDT</td>
-        <td>pullback_to_ema_short</td>
-        <td>stop 2.0×ATR / obj 4.0×ATR</td>
-      </tr></tbody>
+      <tbody><tr><td colspan="4" class="muted">Ninguna señal a la espera de ejecutarse.</td></tr></tbody>
     </table>
   </div>
 

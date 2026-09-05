@@ -1,86 +1,47 @@
 {
   "creado": "2026-08-30T01:16:00+00:00",
   "equity_inicial": 100000.0,
-  "equity": 99898.756509933,
+  "equity": 99798.15098642488,
   "ultima_barra": {
-    "pullback_to_ema_short|AAVEUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|ADAUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|ALGOUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|APTUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|ARBUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|ATOMUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|AVAXUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|AXSUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|BNBUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|BTCUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|CHZUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|DOGEUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|DOTUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|ETCUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|ETHUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|FILUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|FTMUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|GALAUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|GRTUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|HBARUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|ICPUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|INJUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|LINKUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|LTCUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|MANAUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|NEARUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|OPUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|RUNEUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|SANDUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|SOLUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|SUIUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|THETAUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|TIAUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|TRXUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|UNIUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|VETUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|XLMUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|XRPUSDT": "2026-09-01 00:00:00",
-    "pullback_to_ema_short|ZILUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|AAVEUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|ADAUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|ALGOUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|APTUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|ARBUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|ATOMUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|AVAXUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|AXSUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|BNBUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|BTCUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|CHZUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|DOGEUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|DOTUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|ETCUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|ETHUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|FILUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|FTMUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|GALAUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|GRTUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|HBARUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|ICPUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|INJUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|LINKUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|LTCUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|MANAUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|NEARUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|OPUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|RUNEUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|SANDUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|SOLUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|SUIUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|THETAUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|TIAUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|TRXUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|UNIUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|VETUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|XLMUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|XRPUSDT": "2026-09-01 00:00:00",
-    "squeeze_breakdown|ZILUSDT": "2026-09-01 00:00:00"
+    "pullback_to_ema_short|AAVEUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|ADAUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|ALGOUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|APTUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|ARBUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|ATOMUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|AVAXUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|AXSUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|BNBUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|BTCUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|CHZUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|DOGEUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|DOTUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|ETCUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|ETHUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|FILUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|FTMUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|GALAUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|GRTUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|HBARUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|ICPUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|INJUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|LINKUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|LTCUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|MANAUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|NEARUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|OPUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|RUNEUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|SANDUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|SOLUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|SUIUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|THETAUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|TIAUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|TRXUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|UNIUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|VETUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|XLMUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|XRPUSDT": "2026-09-04 00:00:00",
+    "pullback_to_ema_short|ZILUSDT": "2026-09-04 00:00:00"
   },
   "abiertas": [
     {
@@ -93,20 +54,7 @@
       "stop": 0.002876980364638006,
       "objetivo": 0.0017970392707239886,
       "max_barras": 20,
-      "barras": 2,
-      "riesgo": 99.898756509933
-    },
-    {
-      "estrategia": "pullback_to_ema_short",
-      "simbolo": "ADAUSDT",
-      "fecha_senal": "2026-08-30 00:00:00",
-      "fecha_entrada": "2026-09-01 00:00:00",
-      "precio_entrada": 0.1977,
-      "cantidad": 3470.479803705151,
-      "stop": 0.22648528680768554,
-      "objetivo": 0.14012942638462889,
-      "max_barras": 20,
-      "barras": 1,
+      "barras": 5,
       "riesgo": 99.898756509933
     },
     {
@@ -119,7 +67,7 @@
       "stop": 0.09561595756519793,
       "objetivo": 0.06538808486960415,
       "max_barras": 20,
-      "barras": 1,
+      "barras": 4,
       "riesgo": 99.898756509933
     },
     {
@@ -132,7 +80,7 @@
       "stop": 1.6376885853620198,
       "objetivo": 1.1286228292759601,
       "max_barras": 20,
-      "barras": 1,
+      "barras": 4,
       "riesgo": 99.898756509933
     },
     {
@@ -145,7 +93,7 @@
       "stop": 0.014934158084682844,
       "objetivo": 0.009851683830634313,
       "max_barras": 20,
-      "barras": 1,
+      "barras": 4,
       "riesgo": 99.898756509933
     },
     {
@@ -158,7 +106,7 @@
       "stop": 0.9372912360594048,
       "objetivo": 0.6448175278811904,
       "max_barras": 20,
-      "barras": 1,
+      "barras": 4,
       "riesgo": 99.89875650993301
     },
     {
@@ -171,7 +119,7 @@
       "stop": 8.16189961076691,
       "objetivo": 5.522200778466178,
       "max_barras": 20,
-      "barras": 1,
+      "barras": 4,
       "riesgo": 99.898756509933
     },
     {
@@ -184,7 +132,7 @@
       "stop": 0.08108503343893661,
       "objetivo": 0.05853993312212677,
       "max_barras": 20,
-      "barras": 1,
+      "barras": 4,
       "riesgo": 99.898756509933
     },
     {
@@ -197,7 +145,7 @@
       "stop": 5.726471023555671,
       "objetivo": 3.3370579528886557,
       "max_barras": 20,
-      "barras": 1,
+      "barras": 4,
       "riesgo": 99.898756509933
     },
     {
@@ -210,7 +158,7 @@
       "stop": 52.59362704468302,
       "objetivo": 40.372745910633974,
       "max_barras": 20,
-      "barras": 1,
+      "barras": 4,
       "riesgo": 99.898756509933
     },
     {
@@ -223,7 +171,7 @@
       "stop": 0.543938899464048,
       "objetivo": 0.35092220107190397,
       "max_barras": 20,
-      "barras": 1,
+      "barras": 4,
       "riesgo": 99.898756509933
     },
     {
@@ -236,7 +184,7 @@
       "stop": 0.8320436637116618,
       "objetivo": 0.5157126725766763,
       "max_barras": 20,
-      "barras": 1,
+      "barras": 4,
       "riesgo": 99.898756509933
     },
     {
@@ -249,8 +197,34 @@
       "stop": 0.19920204781549716,
       "objetivo": 0.13322590436900572,
       "max_barras": 20,
-      "barras": 1,
+      "barras": 4,
       "riesgo": 99.898756509933
+    },
+    {
+      "estrategia": "pullback_to_ema_short",
+      "simbolo": "DOGEUSDT",
+      "fecha_senal": "2026-09-01 00:00:00",
+      "fecha_entrada": "2026-09-03 00:00:00",
+      "precio_entrada": 0.08172,
+      "cantidad": 10869.377672177126,
+      "stop": 0.09091084417920713,
+      "objetivo": 0.06333831164158576,
+      "max_barras": 20,
+      "barras": 2,
+      "riesgo": 99.898756509933
+    },
+    {
+      "estrategia": "pullback_to_ema_short",
+      "simbolo": "GALAUSDT",
+      "fecha_senal": "2026-09-02 00:00:00",
+      "fecha_entrada": "2026-09-04 00:00:00",
+      "precio_entrada": 0.001789,
+      "cantidad": 312635.4271824124,
+      "stop": 0.002108215745591737,
+      "objetivo": 0.0011505685088165265,
+      "max_barras": 20,
+      "barras": 1,
+      "riesgo": 99.79815098642489
     }
   ],
   "cerradas": [
@@ -269,20 +243,25 @@
       "carry": -0.17566265364061215,
       "pnl": -101.24349006700895,
       "r_multiple": -1.0124349006700895
-    }
-  ],
-  "pendientes": [
+    },
     {
       "estrategia": "pullback_to_ema_short",
-      "simbolo": "DOGEUSDT",
-      "fecha_senal": "2026-09-01 00:00:00",
-      "atr": 0.004595422089603561,
-      "stop_atr": 2.0,
-      "target_atr": 4.0,
-      "max_bars": 20,
-      "espera": 1
+      "simbolo": "ADAUSDT",
+      "fecha_senal": "2026-08-30 00:00:00",
+      "fecha_entrada": "2026-09-01 00:00:00",
+      "fecha_salida": "2026-09-04 00:00:00",
+      "precio_entrada": 0.1977,
+      "precio_salida": 0.22648528680768554,
+      "cantidad": 3470.479803705151,
+      "barras": 4,
+      "motivo": "stop",
+      "comisiones": 1.398520147350202,
+      "carry": -0.6917531491694329,
+      "pnl": -100.60552350811379,
+      "r_multiple": -1.0070748327894403
     }
   ],
+  "pendientes": [],
   "historial": [
     {
       "fecha": "2026-08-31",
@@ -303,12 +282,22 @@
       "operaciones_abiertas": 13
     },
     {
-      "fecha": "2026-09-04",
+      "fecha": "2026-09-03",
       "equity": 99898.756509933,
-      "equity_mercado": 99815.93302804444,
-      "no_realizado": -82.82348188854861,
       "operaciones_cerradas": 1,
       "operaciones_abiertas": 13
+    },
+    {
+      "fecha": "2026-09-04",
+      "equity": 99898.756509933,
+      "operaciones_cerradas": 1,
+      "operaciones_abiertas": 14
+    },
+    {
+      "fecha": "2026-09-05",
+      "equity": 99798.15098642488,
+      "operaciones_cerradas": 2,
+      "operaciones_abiertas": 14
     }
   ]
 }
