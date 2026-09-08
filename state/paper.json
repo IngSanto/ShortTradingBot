@@ -109,6 +109,14 @@
       "no_realizado": 0.0,
       "operaciones_cerradas": 0,
       "operaciones_abiertas": 0
+    },
+    {
+      "fecha": "2026-09-08",
+      "equity": 100000.0,
+      "equity_mercado": 100000.0,
+      "no_realizado": 0.0,
+      "operaciones_cerradas": 0,
+      "operaciones_abiertas": 0
     }
   ],
   "configuracion": {
