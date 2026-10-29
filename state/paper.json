@@ -1545,6 +1545,14 @@
       "no_realizado": 1800.0807930727929,
       "operaciones_cerradas": 44,
       "operaciones_abiertas": 23
+    },
+    {
+      "fecha": "2026-10-29",
+      "equity": 96032.6264993175,
+      "equity_mercado": 97832.70729239029,
+      "no_realizado": 1800.0807930727929,
+      "operaciones_cerradas": 44,
+      "operaciones_abiertas": 23
     }
   ],
   "configuracion": {
